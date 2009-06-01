@@ -26,6 +26,7 @@ def get_description(target):
     """Return a a tuple consisting of the section and a one line description of the specified package.
 
     TODO: should be split, and memoized against a cache of targets?
+    TODO: how to get when it was installed?  Read & parse /var/log/apt/* for this info.
     """
     p = subprocess.Popen(['apt-cache', 'show', target], stdout=subprocess.PIPE)
     p.wait()
@@ -57,6 +58,9 @@ def get_base_installed():
     return base_pkgs
 
 def write_mod_file(filename):
+    """
+    TODO: add timestamp to top of file, commented, for comparison
+    """
     needed = get_leaves()
     output_lines = ['%s: %s\n' % (x, get_description(x)) for x in needed]
     output_lines.sort()
@@ -65,11 +69,14 @@ def write_mod_file(filename):
     fh.close()
 
 def install_mod_file(filename):
-    """Needs to be run as root.
+    """Needs to be run as root.  Assumes yes for installing packages
+
+    TODO: replace with --set-selections, and separate trigger.
+    TODO: Handle timestamp at top of file.
     """
     pkgs = [x.split(':')[0] for x in open(filename).readlines()]
-    args = ['apt-get', 'install']
-    args.extend(pgks)
+    args = ['apt-get', 'install', '--yes']
+    args.extend(pkgs)
     p = subprocess.Popen(args, stdout=subprocess.PIPE)
     p.wait()
     return p.stdout.readlines()
