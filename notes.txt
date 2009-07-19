@@ -1,0 +1,7 @@
+setup.py
+icon dir
+factor out interface (unum_service.py & unum_tray.py & [unum_shell.py])
+
+Move other stuff from ~/.unum?
+
+
