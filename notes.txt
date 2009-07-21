@@ -5,3 +5,38 @@ factor out interface (unum_service.py & unum_tray.py & [unum_shell.py])
 Move other stuff from ~/.unum?
 
 
+		     	      +-----------------------+	    +----------------------------+
+		     	      |                       |	    |                            |
+		     	      |                       |	    |                            |
+		     	      |   Tray ui             |	    |  	 Cli                     |
+		     	      |                       |	    |                            |
+		     	      |                       |	    |                            |
+		     	      |                       |	    |                            |
+		       	      +----------+------------+	    +---/------------------------+	How to send    |
+					 |		      -/				data to other  |
+					 |		    -/					hosts?	       |
+			What does the	 |		  -/						       |
+			ui handle,	 |	        -/						       |
+    			and what else	 |	      -/						       |
+			handles it	 |	    -/							       |
+					 |	  -/							       |
+			      +----------+-------/----------------------------------------+		       |
+			      |                                	                          |		       |
+			      |                                	                          |		       |
+			      |    Unum Service Manager        	     Channel to other host+--------------------+
+			      |                                                           |
+			      |                                                           |
+			      +-------------------+-------------------+---------------+---+
+						  |		      |		      |What is the interface for plugins?
+						  |		      |		      |
+					     +----+------+	+-----+-----+	 +----+------+
+					     |           |	|           |	 |     	     |
+       	       	       	       	       	     | Plugin 1  |     	| Plugin 2  |  	 | Plugin 3  |
+					     |           |	|           |	 |           |
+					     |           |	|           |	 |           |
+					     |           |	|           |	 |           |
+					     |           |	|           |	 |           |
+					     |           |	|           |	 |           |
+					     +-----------+	+-----------+	 +-----------+
+
+
