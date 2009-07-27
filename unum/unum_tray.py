@@ -4,14 +4,13 @@ import pygtk
 pygtk.require('2.0')
 
 import gtk
-import pynotify
-import webbrowser
-import threading
-import subprocess
 import multiprocessing
-import webbrowser
-import time
+import pynotify
 import socket
+import subprocess
+import threading
+import time
+import webbrowser
 
 # import xmlrpclib
 
@@ -21,12 +20,10 @@ pynotify.init("unum")
 
 hosts = None
 
-
 edges = {'left': 'right',
          'right': 'left',
          'up': 'down',
          'down': 'up'}
-
 
 
 def create_synerge_conf(hosts, remote, edge):
@@ -164,50 +161,38 @@ class main_interface(object):
         self.icon.connect('popup-menu', popup_menu_cb, self.menu)
 
     def setup_host_menu_commands(self):
+        """
+        NOTE: use item.get_property('label') to find specific items.
+        """
         for machine in sorted(self.hosts):
             submenu_item = gtk.MenuItem(machine)
             if not self.hosts[machine]:
                 submenu_item.set_sensitive(False)
             self.menu.append(submenu_item)
             submenu = gtk.Menu()
-            menuItem = gtk.MenuItem("SSH to this machine")
-            menuItem.connect('activate', build_ssh_callback(machine))
-            submenu.append(menuItem)
-            menuItem = gtk.MenuItem("Browse the web from this machine")
-            menuItem.set_sensitive(False)
-            submenu.append(menuItem)
-            menuItem = gtk.MenuItem("Services hosted on this machine")
-            menuItem.set_sensitive(False)
-            submenu.append(menuItem)
-            menuItem = gtk.MenuItem("Use synergy with this machine.")
-            menuItem.connect('activate', synergy_cb)
-    #        menuItem.set_sensitive(False)
-            submenu.append(menuItem)
-            menuItem = gtk.MenuItem("Mount this machine's home directory")
-            menuItem.set_sensitive(False)
-            menuItem.connect('activate', build_mount_callback(machine))
-            submenu.append(menuItem)
+
+            self.add_menu_item("SSH to this machine", submenu, build_ssh_callback(machine), sensitive=True)
+            self.add_menu_item("Browse the web from this machine", submenu, None, sensitive=False)
+            self.add_menu_item("Services hosted on this machine", submenu, None, sensitive=False)
+            self.add_menu_item("Use synergy with this machine.", submenu, synergy_cb, sensitive=True)
+            self.add_menu_item("Mount this machine's home directory", submenu, build_mount_callback(machine), sensitive=False)
 
             submenu_item.set_submenu(submenu)
 
     def add_non_specific_host_commands(self):
         self.add_separator()
+        self.add_image_menu_item(gtk.STOCK_PROPERTIES, identify_cb)
+        self.add_menu_item("Configure IPython distributed environment", sensitive=False)
+        self.add_menu_item("Configure Erlang distributed environment", sensitive=False)
+        self.add_menu_item("Add EC2 Instances to the Constellation", sensitive=False)
 
-        menuItem = gtk.ImageMenuItem(gtk.STOCK_PROPERTIES)
-        menuItem.connect('activate', identify_cb)
-        self.menu.append(menuItem)
-
-        menuItem = gtk.MenuItem("Configure IPython distributed environment")
-        menuItem.set_sensitive(False)
-        self.menu.append(menuItem)
-
-        menuItem = gtk.MenuItem("Configure Erlang distributed environment")
-        menuItem.set_sensitive(False)
-        self.menu.append(menuItem)
-
-        menuItem = gtk.MenuItem("Add EC2 Instances to the Constellation")
-        menuItem.set_sensitive(False)
-        self.menu.append(menuItem)
+    def add_menu_item(self, title, parent=None, callback=None, sensitive=True):
+        menuItem = gtk.MenuItem(title)
+        if callback:
+            menuItem.connect('activate', callback)
+        menuItem.set_sensitive(sensitive)
+        parent_menu = parent or self.menu
+        parent_menu.append(menuItem)
 
     def add_image_menu_item(self, image, callback):
         menuItem = gtk.ImageMenuItem(image)
@@ -242,13 +227,22 @@ def get_pointer_loc():
     a, x, y, b = display.get_pointer()
     return (x,y)
 
-def main(unum_hosts):
+def main(unum_hosts, ipython=False):
     icon = gtk.status_icon_new_from_file("icon.png")
     interface = main_interface(unum_hosts, icon)
     interface.set_tooltip()
     interface.set_left_click()
     interface.set_right_click()
     interface.set_visible()
+
+    # start IPython
+    if ipython:
+        class ipython_thread(threading.Thread):
+            def run(self):
+                from IPython.Shell import IPShellEmbed
+                shell=IPShellEmbed(user_ns = dict(interface = interface))
+                shell()
+        ipython_thread().start()
 
     # spin GTK off in a background thread
     gtk.gdk.threads_init()
@@ -257,8 +251,14 @@ def main(unum_hosts):
         gtk.main()
     gtkmain().start()
 
+    # Try another thread to keep menus reflecting reality here
+    # class menu_update_thread(threading.Thread):
+    #     def run(self, interface):
+    #         #do something with interface
+    #         pass
+    # menu_update_thread.start()
 
 if __name__ == '__main__':
-    main(unum_hosts)
+    main(unum_hosts, True)
 
 

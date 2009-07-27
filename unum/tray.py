@@ -97,7 +97,7 @@ def get_playing_music_via_dbus():
 if __name__ == '__main__':
     unum_tray.icon_path = icon_path
     unum_tray.help_path = help_path
-    unum_tray.main(unum_hosts)
+    unum_tray.main(unum_hosts, True)
     #print create_synerge_conf(unum_hosts, 'godel', 'left')
     # import time
     # while True:
