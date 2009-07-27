@@ -51,10 +51,6 @@ def create_synerge_conf(hosts, remote, edge):
 def help_cb(widget, data=None):
     webbrowser.open(help_path)
 
-def quit_cb(widget, data = None):
-    if data:
-        data.set_visible(False)
-    gtk.main_quit()
 
 def popup_menu_cb(widget, button, time, data = None):
     if button == 3:
@@ -149,9 +145,11 @@ class main_interface(object):
         global hosts
         hosts = self.hosts
 
+    def add_separator(self):
+        self.menu.append(gtk.SeparatorMenuItem())
+
     def set_visible(self):
         self.icon.set_visible(True)
-
 
     def set_tooltip(self):
         self.icon.set_tooltip("Unum Constellation Manager")
@@ -193,36 +191,39 @@ class main_interface(object):
             submenu_item.set_submenu(submenu)
 
     def add_non_specific_host_commands(self):
-        sep = gtk.SeparatorMenuItem()
-        self.menu.append(sep)
+        self.add_separator()
+
         menuItem = gtk.ImageMenuItem(gtk.STOCK_PROPERTIES)
         menuItem.connect('activate', identify_cb)
         self.menu.append(menuItem)
+
         menuItem = gtk.MenuItem("Configure IPython distributed environment")
         menuItem.set_sensitive(False)
         self.menu.append(menuItem)
+
         menuItem = gtk.MenuItem("Configure Erlang distributed environment")
         menuItem.set_sensitive(False)
         self.menu.append(menuItem)
+
         menuItem = gtk.MenuItem("Add EC2 Instances to the Constellation")
         menuItem.set_sensitive(False)
         self.menu.append(menuItem)
 
+    def add_image_menu_item(self, image, callback):
+        menuItem = gtk.ImageMenuItem(image)
+        menuItem.connect('activate', callback)
+        self.menu.append(menuItem)
 
     def add_help_about_quit_section(self):
-        sep = gtk.SeparatorMenuItem()
-        self.menu.append(sep)
+        self.add_separator()
+        self.add_image_menu_item(gtk.STOCK_HELP, help_cb)
+        self.add_image_menu_item(gtk.STOCK_ABOUT, activate_icon_cb)
+        self.add_image_menu_item(gtk.STOCK_QUIT, self.quit_cb)
 
-        menuItem = gtk.ImageMenuItem(gtk.STOCK_HELP)
-        menuItem.connect('activate', help_cb)
-        self.menu.append(menuItem)
-        menuItem = gtk.ImageMenuItem(gtk.STOCK_ABOUT)
-        menuItem.connect('activate', activate_icon_cb)
-        self.menu.append(menuItem)
-        menuItem = gtk.ImageMenuItem(gtk.STOCK_QUIT)
-        menuItem.connect('activate', quit_cb, self.icon)
-        self.menu.append(menuItem)
-        return self.menu
+
+    def quit_cb(self, widget):
+        self.icon.set_visible(False)
+        gtk.main_quit()
 
 def simple_msg(title, msg):
     m = pynotify.Notification(title, msg, icon_path)
