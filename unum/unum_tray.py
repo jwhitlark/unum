@@ -140,65 +140,89 @@ def build_mount_callback(host):
     return callback
 ## --------------------- End Callbacks
 
+class main_interface(object):
+    def __init__(self, unum_hosts, icon):
+        self.hosts = unum_hosts
+        self.icon = icon
+        self.menu = gtk.Menu()
+        self.stars = {}
+        global hosts
+        hosts = self.hosts
 
-def setup_popup_menu(icon, unum_hosts):
-    global hosts
-    hosts = unum_hosts
-    menu = gtk.Menu()
-    for machine in sorted(unum_hosts):
-        submenu_item = gtk.MenuItem(machine)
-        if not unum_hosts[machine]:
-            submenu_item.set_sensitive(False)
-        menu.append(submenu_item)
-        submenu = gtk.Menu()
-        menuItem = gtk.MenuItem("SSH to this machine")
-        menuItem.connect('activate', build_ssh_callback(machine))
-        submenu.append(menuItem)
-        menuItem = gtk.MenuItem("Browse the web from this machine")
+    def set_visible(self):
+        self.icon.set_visible(True)
+
+
+    def set_tooltip(self):
+        self.icon.set_tooltip("Unum Constellation Manager")
+
+    def set_left_click(self):
+        self.icon.connect('activate', activate_icon_cb)
+
+    def set_right_click(self):
+        self.setup_host_menu_commands()
+        self.add_non_specific_host_commands()
+        self.add_help_about_quit_section()
+        self.icon.connect('popup-menu', popup_menu_cb, self.menu)
+
+    def setup_host_menu_commands(self):
+        for machine in sorted(self.hosts):
+            submenu_item = gtk.MenuItem(machine)
+            if not self.hosts[machine]:
+                submenu_item.set_sensitive(False)
+            self.menu.append(submenu_item)
+            submenu = gtk.Menu()
+            menuItem = gtk.MenuItem("SSH to this machine")
+            menuItem.connect('activate', build_ssh_callback(machine))
+            submenu.append(menuItem)
+            menuItem = gtk.MenuItem("Browse the web from this machine")
+            menuItem.set_sensitive(False)
+            submenu.append(menuItem)
+            menuItem = gtk.MenuItem("Services hosted on this machine")
+            menuItem.set_sensitive(False)
+            submenu.append(menuItem)
+            menuItem = gtk.MenuItem("Use synergy with this machine.")
+            menuItem.connect('activate', synergy_cb)
+    #        menuItem.set_sensitive(False)
+            submenu.append(menuItem)
+            menuItem = gtk.MenuItem("Mount this machine's home directory")
+            menuItem.set_sensitive(False)
+            menuItem.connect('activate', build_mount_callback(machine))
+            submenu.append(menuItem)
+
+            submenu_item.set_submenu(submenu)
+
+    def add_non_specific_host_commands(self):
+        sep = gtk.SeparatorMenuItem()
+        self.menu.append(sep)
+        menuItem = gtk.ImageMenuItem(gtk.STOCK_PROPERTIES)
+        menuItem.connect('activate', identify_cb)
+        self.menu.append(menuItem)
+        menuItem = gtk.MenuItem("Configure IPython distributed environment")
         menuItem.set_sensitive(False)
-        submenu.append(menuItem)
-        menuItem = gtk.MenuItem("Services hosted on this machine")
+        self.menu.append(menuItem)
+        menuItem = gtk.MenuItem("Configure Erlang distributed environment")
         menuItem.set_sensitive(False)
-        submenu.append(menuItem)
-        menuItem = gtk.MenuItem("Use synergy with this machine.")
-        menuItem.connect('activate', synergy_cb)
-#        menuItem.set_sensitive(False)
-        submenu.append(menuItem)
-        menuItem = gtk.MenuItem("Mount this machine's home directory")
+        self.menu.append(menuItem)
+        menuItem = gtk.MenuItem("Add EC2 Instances to the Constellation")
         menuItem.set_sensitive(False)
-        menuItem.connect('activate', build_mount_callback(machine))
-        submenu.append(menuItem)
+        self.menu.append(menuItem)
 
-        submenu_item.set_submenu(submenu)
 
-    sep = gtk.SeparatorMenuItem()
-    menu.append(sep)
-    menuItem = gtk.ImageMenuItem(gtk.STOCK_PROPERTIES)
-    menuItem.connect('activate', identify_cb)
-    menu.append(menuItem)
-    menuItem = gtk.MenuItem("Configure IPython distributed environment")
-    menuItem.set_sensitive(False)
-    menu.append(menuItem)
-    menuItem = gtk.MenuItem("Configure Erlang distributed environment")
-    menuItem.set_sensitive(False)
-    menu.append(menuItem)
-    menuItem = gtk.MenuItem("Add EC2 Instances to the Constellation")
-    menuItem.set_sensitive(False)
-    menu.append(menuItem)
+    def add_help_about_quit_section(self):
+        sep = gtk.SeparatorMenuItem()
+        self.menu.append(sep)
 
-    sep = gtk.SeparatorMenuItem()
-    menu.append(sep)
-
-    menuItem = gtk.ImageMenuItem(gtk.STOCK_HELP)
-    menuItem.connect('activate', help_cb)
-    menu.append(menuItem)
-    menuItem = gtk.ImageMenuItem(gtk.STOCK_ABOUT)
-    menuItem.connect('activate', activate_icon_cb)
-    menu.append(menuItem)
-    menuItem = gtk.ImageMenuItem(gtk.STOCK_QUIT)
-    menuItem.connect('activate', quit_cb, icon)
-    menu.append(menuItem)
-    return menu
+        menuItem = gtk.ImageMenuItem(gtk.STOCK_HELP)
+        menuItem.connect('activate', help_cb)
+        self.menu.append(menuItem)
+        menuItem = gtk.ImageMenuItem(gtk.STOCK_ABOUT)
+        menuItem.connect('activate', activate_icon_cb)
+        self.menu.append(menuItem)
+        menuItem = gtk.ImageMenuItem(gtk.STOCK_QUIT)
+        menuItem.connect('activate', quit_cb, self.icon)
+        self.menu.append(menuItem)
+        return self.menu
 
 def simple_msg(title, msg):
     m = pynotify.Notification(title, msg, icon_path)
@@ -219,10 +243,11 @@ def get_pointer_loc():
 
 def main(unum_hosts):
     icon = gtk.status_icon_new_from_file("icon.png")
-    icon.set_tooltip("Unum Constellation Manager")
-    icon.connect('activate', activate_icon_cb)
-    icon.connect('popup-menu', popup_menu_cb, setup_popup_menu(icon, unum_hosts))
-    icon.set_visible(True)
+    interface = main_interface(unum_hosts, icon)
+    interface.set_tooltip()
+    interface.set_left_click()
+    interface.set_right_click()
+    interface.set_visible()
 
     # spin GTK off in a background thread
     gtk.gdk.threads_init()
