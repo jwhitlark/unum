@@ -1,6 +1,45 @@
+The List:
+heartbeat as separate service, run headless (unumd)
+xmlrpc interface to unumd
+get all hosts from couchdb
+check live by watching heartbeat
+update list if new heartbeat shows up
+command queue - tray calls unumd, which connects to queue
+how to handle notify?  can that work from unumd as a service?
+
+Services have user,group,other permissions
+Need federation for other constellations
+
+unum wiki
+
+unumd:  update & restart (callable from tray)
+
+Git sync (pynotify & git)
+
+ipython key in couchdb
+interface to start ipython
+ipython runs in virtualenv, so it doesn't screw up the rest of the environment
+
+clean up host/service menu, keep track as class variables, update alive status
+fix synergy stuff so it's not hard coded.
+
+erlang key in couchdb
+interfact to start erlang shell
+
+proxy imap, smtp, pop?
+directory service for host names?  Dynamic, check which network you're on.
+
+
+hadoop?
+
+
+
+
+Misc Notes:
 setup.py
-icon dir
 factor out interface (unum_service.py & unum_tray.py & [unum_shell.py])
+
+Use rabbit MQ for initial cross machine interface - figure the rest out later.
 
 Move other stuff from ~/.unum?
 

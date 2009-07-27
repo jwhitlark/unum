@@ -13,7 +13,39 @@ import webbrowser
 import time
 import socket
 
+# import xmlrpclib
+
+# srvr = xmlrpclib.ServerProxy('http://localhost:8765/')
+
 pynotify.init("unum")
+
+hosts = None
+
+
+edges = {'left': 'right',
+         'right': 'left',
+         'up': 'down',
+         'down': 'up'}
+
+
+
+def create_synerge_conf(hosts, remote, edge):
+    op_edge = edges[edge]
+    output = []
+    output.append('section: screens')
+    output.append('\t%s:' % socket.gethostname())
+    for machine in hosts:
+        output.append('\t%s:' % machine)
+    output.append('end')
+    output.append('section: links')
+    output.append('\t%s:' % socket.gethostname())
+    output.append('\t\t%s = %s' % (edge, remote))
+    output.append('\t%s:' % remote)
+    output.append('\t\t%s = %s' % (op_edge, socket.gethostname()))
+    output.append('end')
+    return '\n'.join(output)
+
+
 
 ## ----------------- Callbacks
 def help_cb(widget, data=None):
@@ -39,44 +71,64 @@ def activate_icon_cb(widget, data = None):
 
 ## -----------------   Not sure where this belongs...
 def identify_cb(widget, data=None):
-    simple_msg('Identify machines', '%s\n(other machines TODO)' % socket.gethostname())
-    #TODO: send msg to other hosts
+    simple_msg("Unum Identification", socket.gethostname())
+    #srvr.notify('Identify machines', '%s\n(other machines TODO)' % socket.gethostname())
 
 ## ---- plugin callbacks
 def synergy_cb(widget, data=None):
+    # Kill running synergy
+    subprocess.call(['pkill', 'synergy'])
     max_x, max_y = get_screen_size()
     while True:
         x, y = get_pointer_loc()
         if x == 0:
-            simple_msg("Edge selected", "left")
+            server_screen_edge = 'left'
             break
         if y == 0:
-            simple_msg("Edge selected", "top")
+            server_screen_edge = 'up'
             break
         if x == (max_x - 1):
-            simple_msg("Edge selected", "right")
+            server_screen_edge = 'right'
             break
         if y == (max_y - 1):
-            simple_msg("Edge selected", "bottom")
+            server_screen_edge = 'down'
             break
         time.sleep(.05)
-
+    simple_msg("Edge selected", server_screen_edge)
+    remote_edge = edges[server_screen_edge]
+    # generate file
+    #FIXME: using global for hosts
+    #FIXME: remote host hard coded
+    file_contents = create_synerge_conf(hosts, 'godel', server_screen_edge)
+    with open("/home/jw/.unum/synergy.conf", 'w') as fh:
+        fh.write(file_contents)
+    # Start synergy
+    class synergy_callback_thread(multiprocessing.Process):
+        def run(self):
+            subprocess.call(['synergys', '--config', '/home/jw/.unum/synergy.conf'])
+    synergy_callback_thread().start()
+    #TODO: this is the stupid way, use paramiko in the future
+    # start remote synergy only if not running (or just kill it first)
+    subprocess.call(['ssh', 'godel.local', 'pkill',  'synergy'])
+    subprocess.call(['ssh', 'godel.local', 'nohup', 'synergyc', '%s.local' % socket.gethostname(), '&'])
+    # Tell user it worked
+    simple_msg("Synergy info", "local host:%s\nlocal edge:%s\nremote host:%s\nremote edge:%s" % (socket.gethostname(), server_screen_edge, 'unknown', remote_edge))
 
 def build_ssh_callback(host):
     """Uses multiprocessing so that processes will survive death of the host.
     """
     def callback(widget, data=None):
-        class callback_thread(multiprocessing.Process):
+        class ssh_callback_thread(multiprocessing.Process):
             def run(self):
                 subprocess.call(['gnome-terminal', '-e', 'ssh %s.local' % host])
-        callback_thread().start()
+        ssh_callback_thread().start()
     return callback
 
 def build_mount_callback(host):
     """Uses multiprocessing so that processes will survive death of the host.
     """
     def callback(widget, data=None):
-        class callback_thread(multiprocessing.Process):
+        class mount_callback_thread(multiprocessing.Process):
             def run(self):
                 pass
                 ## FIXME: Ensure directory exists
@@ -90,6 +142,8 @@ def build_mount_callback(host):
 
 
 def setup_popup_menu(icon, unum_hosts):
+    global hosts
+    hosts = unum_hosts
     menu = gtk.Menu()
     for machine in sorted(unum_hosts):
         submenu_item = gtk.MenuItem(machine)

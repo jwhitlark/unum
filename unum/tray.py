@@ -13,17 +13,15 @@ import subprocess
 import multiprocessing
 import socket
 import paramiko
+from couchdb.client import Server
 
 import unum_tray
-
-edges = {'left': 'right',
-         'right': 'left',
-         'top': 'bottom',
-         'bottom': 'top'}
 
 # Load daemon config
 exec(open('/home/jw/.unum/unumrc').read())
 
+#srv = Server('http://archive.local:5984')
+#hosts_db = srv['unum_hosts']
 
 # Remove localhost from hosts
 try:
@@ -31,7 +29,7 @@ try:
 except:
     pass
 
-# Check if remote hosts can be resolved
+#Check if remote hosts can be resolved
 def check_hosts(unum_hosts):
     """Check if hosts are available.
     """
@@ -94,21 +92,6 @@ def get_playing_music_via_dbus():
     #gtk.main_quit()
 
 
-def create_synerge_conf(hosts, remote, edge):
-    op_edge = edges[edge]
-    output = []
-    output.append('section: screens')
-    output.append('\t%s.local:' % socket.gethostname())
-    for machine in hosts:
-        output.append('\t%s.local:' % machine)
-    output.append('end')
-    output.append('section: links')
-    output.append('\t%s.local:' % socket.gethostname())
-    output.append('\t\t%s = %s.local' % (edge, remote))
-    output.append('\t%s.local:' % remote)
-    output.append('\t\t%s = %s.local:' % (op_edge, socket.gethostname()))
-    output.append('end')
-    return '\n'.join(output)
 
 
 if __name__ == '__main__':
