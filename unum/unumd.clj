@@ -2,6 +2,7 @@
   ;(:use clojure.contrib.str-utils)
   (:use zookeeper)
   (:use clojure.set)
+;  (:require '(org.enclojure.repl.main :as enclojure))
 ;  (:import (org.apache.zookeeper ZooKeeper Watcher CreateMode ZooDefs$Ids))
 ;  (:import (org.apache.zookeeper.data Stat ACL))
 ;  (:import (java.net InetAddress))
@@ -80,8 +81,31 @@
     (println cur)
     (println (difference perm cur))))
 
-(loop [] (recur))
+;(loop [] (recur))
 
-;TODO: embed intrepreter
-;see http://clojure101.blogspot.com/2009/05/creating-clojure-repl-in-your.html
-;(def server-socket (org.enclojure.repl.main/run-repl-server 11345))
+; xmlrpc server on socket
+(def server (new redstone.xmlrpc.simple.Server 8080))
+(def h (proxy [redstone.xmlrpc.XmlRpcInvocationHandler] []
+       (invoke [method-name arguments]
+          (cond
+            (= method-name "add") (+ (nth arguments 0) (nth arguments 1))
+            (= method-name "get") (get-znode-data (nth arguments 0))
+            true (throw (new Exception "No such method"))))))
+(doto (.getXmlRpcServer server) (.addInvocationHandler "test" h))
+(.start server)
+
+
+; Telnet repl on socket
+(import '(java.net ServerSocket Socket)
+        '(java.io PushbackReader BufferedReader
+                  InputStreamReader OutputStreamWriter
+                  PrintWriter))
+
+(let [a (ServerSocket. 4445)]
+  (loop []
+    (let [b (.accept a)]
+      (with-open [in (-> b .getInputStream InputStreamReader. BufferedReader. PushbackReader.)
+              out (-> b .getOutputStream OutputStreamWriter. PrintWriter.)]
+        (binding [*in* in *out* out *err* out]
+          (clojure.main/repl))))
+    (recur)))
