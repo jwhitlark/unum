@@ -12,43 +12,51 @@ import webbrowser
 import subprocess
 import multiprocessing
 import socket
-import paramiko
-from couchdb.client import Server
+#import paramiko
+#from couchdb.client import Server
 
 import unum_tray
 
 # Load daemon config
-exec(open('/home/jw/.unum/unumrc').read())
+# exec(open('/home/jw/.unum/unumrc').read())
 
-#srv = Server('http://archive.local:5984')
-#hosts_db = srv['unum_hosts']
+# #srv = Server('http://archive.local:5984')
+# #hosts_db = srv['unum_hosts']
 
-# Remove localhost from hosts
-try:
-    del unum_hosts[socket.gethostname()]
-except:
-    pass
+# # Remove localhost from hosts
+# try:
+#     del unum_hosts[socket.gethostname()]
+# except:
+#     pass
 
 #Check if remote hosts can be resolved
-def check_hosts(unum_hosts):
-    """Check if hosts are available.
-    """
-    #thread this
-    for host in unum_hosts:
-        try:
-            unum_hosts[host] = socket.gethostbyname('%s.local' % host)
-        except:
-            pass
-    return unum_hosts
-
-unum_hosts = check_hosts(unum_hosts)
+# def check_hosts(unum_hosts):
+#     """Check if hosts are available.
+#     """
+#     #thread this
+#     for host in unum_hosts:
+#         try:
+#             unum_hosts[host] = socket.gethostbyname('%s.local' % host)
+#         except:
+#             pass
+#     return unum_hosts
 
 
+
+def get_unum_hosts():
+    session_bus = dbus.SessionBus()
+    hosts = session_bus.get_object('org.whitlark.unumd', '/org/whitlark/unumd/hosts')
+    all_hosts = hosts.getAllHosts()
+    live_hosts = hosts.getLiveHosts()
+    return (all_hosts, live_hosts)
 
 def get_playing_music_via_dbus():
     session_bus = dbus.SessionBus()
     rhythmbox = session_bus.get_object('org.gnome.Rhythmbox', '/org/gnome/Rhythmbox/Player')
     return rhythmbox.getPlayingUri()
+
+current_host = socket.gethostname()
+unum_hosts = get_unum_hosts()
 
 # def main(unum_hosts):
 #     unum_hosts = check_hosts(unum_hosts)

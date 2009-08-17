@@ -135,12 +135,13 @@ def build_mount_callback(host):
 
 class main_interface(object):
     def __init__(self, unum_hosts, icon):
-        self.hosts = unum_hosts
+        self.all_hosts = unum_hosts[0]
+        self.live_hosts = unum_hosts[1]
         self.icon = icon
         self.menu = gtk.Menu()
         self.stars = {}
         global hosts
-        hosts = self.hosts
+        hosts = self.all_hosts
 
     def add_separator(self):
         self.menu.append(gtk.SeparatorMenuItem())
@@ -164,9 +165,9 @@ class main_interface(object):
         """
         NOTE: use item.get_property('label') to find specific items.
         """
-        for machine in sorted(self.hosts):
+        for machine in sorted(self.all_hosts):
             submenu_item = gtk.MenuItem(machine)
-            if not self.hosts[machine]:
+            if machine not in self.current_host:
                 submenu_item.set_sensitive(False)
             self.menu.append(submenu_item)
             submenu = gtk.Menu()

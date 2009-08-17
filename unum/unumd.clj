@@ -2,7 +2,11 @@
   ;(:use clojure.contrib.str-utils)
   (:use zookeeper)
   (:use clojure.set)
-;  (:require '(org.enclojure.repl.main :as enclojure))
+  (:import (java.net ServerSocket Socket))
+  (:import (java.io PushbackReader BufferedReader
+		    InputStreamReader OutputStreamWriter
+		    PrintWriter))
+
 ;  (:import (org.apache.zookeeper ZooKeeper Watcher CreateMode ZooDefs$Ids))
 ;  (:import (org.apache.zookeeper.data Stat ACL))
 ;  (:import (java.net InetAddress))
@@ -41,10 +45,16 @@
     (when-not (znode-exists? path)
       (create-perm-znode path now))))
 
+;org.apache.zookeeper.KeeperException$NodeExistsException: KeeperErrorCode = NodeExists for /unum/current/godel
 (defn logon []
   (let [path (str "/unum/current/" hostname)
 	now (str (System/currentTimeMillis))] ;in milliseconds!
-    (create-temp-znode path now)))
+    (try
+     (create-temp-znode path now)
+     (catch org.apache.zookeeper.KeeperException$NodeExistsException _ (do
+									 (println "Node Exists, try again in a few seconds")
+									 (System/exit 1))))
+     ))
 
 
 (defn unum-test []
@@ -83,29 +93,37 @@
 
 ;(loop [] (recur))
 
+; dbus stuff  -- This is dead; the java dbus library sucks
+;(import '(org.freedesktop.dbus DBusConnection))
+;(def bus (. DBusConnection (getConnection (DBusConnection/SESSION))))
+;following line does something, but not sure if it's what we want.
+;(def tomboy (.getRemoteObject bus "org.gnome.Tomboy" "/org/gnome/Tomboy/RemoteControl"))
+
+; DBusConnection.requestBusName(String)
+
 ; xmlrpc server on socket
 (def server (new redstone.xmlrpc.simple.Server 8080))
 (def h (proxy [redstone.xmlrpc.XmlRpcInvocationHandler] []
        (invoke [method-name arguments]
           (cond
-            (= method-name "add") (+ (nth arguments 0) (nth arguments 1))
-            (= method-name "get") (get-znode-data (nth arguments 0))
+;            (= method-name "add") (+ (nth arguments 0) (nth arguments 1))
+            (= method-name "add") (apply + arguments)
+            (= method-name "get") (get-znode-data (first arguments))
             true (throw (new Exception "No such method"))))))
 (doto (.getXmlRpcServer server) (.addInvocationHandler "test" h))
 (.start server)
 
 
 ; Telnet repl on socket
-(import '(java.net ServerSocket Socket)
-        '(java.io PushbackReader BufferedReader
-                  InputStreamReader OutputStreamWriter
-                  PrintWriter))
 
-(let [a (ServerSocket. 4445)]
-  (loop []
-    (let [b (.accept a)]
-      (with-open [in (-> b .getInputStream InputStreamReader. BufferedReader. PushbackReader.)
-              out (-> b .getOutputStream OutputStreamWriter. PrintWriter.)]
-        (binding [*in* in *out* out *err* out]
-          (clojure.main/repl))))
-    (recur)))
+(defn repl-on-socket []
+  (let [a (ServerSocket. 4445)]
+    (loop []
+      (let [b (.accept a)]
+	(with-open [in (-> b .getInputStream InputStreamReader. BufferedReader. PushbackReader.)
+		    out (-> b .getOutputStream OutputStreamWriter. PrintWriter.)]
+	  (binding [*in* in *out* out *err* out]
+	    (clojure.main/repl))))
+      (recur))))
+;(.start (Thread. repl-on-socket))
+;org.apache.zookeeper.KeeperException$NodeExistsException:
