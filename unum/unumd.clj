@@ -81,7 +81,13 @@
 
 
 ;(unum-test)
-(initial-setup)
+(try
+ (initial-setup)
+ (catch org.apache.zookeeper.KeeperException$ConnectionLossException _ (do
+									 (println "Unable to connect to zookeeper.")
+									 (System/exit 1))))
+
+
 (register)
 (logon)
 (let [perm (get-znode-children "/unum/static")
@@ -125,5 +131,5 @@
 	  (binding [*in* in *out* out *err* out]
 	    (clojure.main/repl))))
       (recur))))
-;(.start (Thread. repl-on-socket))
+(.start (Thread. repl-on-socket))
 ;org.apache.zookeeper.KeeperException$NodeExistsException:

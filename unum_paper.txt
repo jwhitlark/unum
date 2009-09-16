@@ -1,0 +1,53 @@
+TODO: review N2N paper
+TODO: review blog entry on N2N from dist. database startup
+TODO: review RMS paper on cloud computing
+
+* Secure connections
+
+Traditional VPNs operate on a master/slave model.  P2P VPNs, what I call VPPNs (Virtual Private Peer Network), allow users to connect resources without a central authority, and with minimal overhead.
+
+* Constellations
+
+I define a constellation as a set of computing resources, under a single entity's (presumably but not necessarily a person) control, securely connected, which shares data and resources to better meet the user's current needs.
+
+* Constellation devices
+
+- Computer
+- TV
+- DVD player
+- media server
+- wireless access point/network switch
+- wall warts (power plug computers)
+- virtual machines
+- game machines (PS3)
+
+
+* Connecting to friends
+
+A web of trust model, online directory (perhaps based on google's updated finger protocol), or direct connection are the three ways I see to allow constellations to interact at their borders.
+
+* Authentication and Services
+
+I envision an apt-sources like configuration of service providers.  Service providers would be defined by a service feed URL, and a cryptographic key to authenticate services against the key of the provider.  This can work both ways, with the user's constellation authenticating the user for security, metering and billing.  The constellation ID and authentication essentially becomes a global user account, under the control of the user.  This model extends the promise of openID, and could perhaps be made to inter-operate with it.  Also of interest is google's initiative to implement finger for the web 2.0 world.
+
+* Mine, yours, ours, or "can I borrow a cup of cpu?"
+
+Once the concept of mine as applied to a set of interacting computing resources is considered, the logical extensions of yours, ours, and loaning become interesting questions.  For instance, my wife's constellation should be able to borrow unused resources from mine at need.  They should also be able to work together to most efficiently partition any resources they share.  i.e. if I'm downloading something via bit-torrent, and my wife attempts to make a sip call, and both constellations share a common network connection, our respective constellations should be able to negotiate sharing and throttling of applications according to predefined rules.  Similarly, I should be able to "loan" resources to friends ad hoc, without ever having to move, power down, configure, or otherwise modify my constellation.
+
+* The special problem of smart cell phones, (the iphone)
+
+There is an inherent tension between cell providers and the unum model.  Network providers and current manufactures lock down their networks and devices in order partition services and sell them to users individually for maximum revenue.  With all communications in a constellation encrypted, this model is completely broken.  A completely open device, paying solely for connectivity, is obviously in the user's interests; if providers will allow it is another question.
+
+* Always secure connection between machines, even on a local network.
+
+While there would be efficiencies to be had by detecting the potential for unencrypted direct connections on the local network, I feel the value of knowing all traffic on your constellation is secure from the outside world, (because it is encrypted/decrypted by the network stack on all machines), is difficult to overstate.  This model tips the balance of power to the individual away from local or remote connection providers, (i.e. the local lan, or your ISP).
+
+* Political power, or the constellation as the 2nd Amendment of the 21st century.
+
+DDOS attacks have usually been carried out with networks of unwitting compromised machines, while the director of the attack remains hidden.  The unum concept, and it's ability to link with others and non-anonymously attack third parties. This provides an important safety valve in the computing era; you can carry out attacks, but you have to take responsibility for your actions.
+
+* IM as the command line of the constellation
+
+* xml or s-exps?
+
+TODO: review paper by Steve Yeggie

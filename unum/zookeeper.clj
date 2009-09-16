@@ -17,7 +17,13 @@
   ;TODO: pass in a watcher instead of nil?  have a watcher passed back?
   ;Question: should this be a multimethod to switch on type?
   ([] (connect "10.17.74.1:2181"))
-  ([zk_server] (def zk (ZooKeeper. zk_server 3000 nil))))
+;; TODO: following doesn't have any effect, why?
+  ([zk_server] (def zk (try
+			(ZooKeeper. zk_server 3000 nil)
+			(catch org.apache.zookeeper.KeeperException$ConnectionLossException _ (do
+												(println "Zookeeper not reachable.")
+												(System/exit 1)))))))
+
 
 
 ; create and return a Watcher proxy - works! Damn, but clojure is cool.
