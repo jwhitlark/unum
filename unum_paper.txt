@@ -1,14 +1,45 @@
-TODO: review N2N paper
-TODO: review blog entry on N2N from dist. database startup
-TODO: review RMS paper on cloud computing
+Walking or Flying, or a middle ground
+
+People like to argue that either the os of a single machine will
+triumph, or everything will reside in the cloud.  But this seems
+simplistic; is there another way which takes the strengths from both?
+
+I own my shoes, I own my bike, I probably own my car, although it's a
+bigger decision, I don't own buses, trains, or planes.  This seems to
+mirror what might develop in computers; we'll own the smaller day to
+day devices, while the larger, special purpose, high power ones will
+be rented as needed.
+
+While Microsoft and Apple will tell you that the individual machine is
+the most important, Google will tell you the cloud will rule.  I think
+they are both wrong.
+
+An operating system provides services so that you can get things done.
+Services in the cloud take the opposite approach; they give you a
+capability that someone else owns and manages.  Both approaches are
+flawed.  Arguing that the future rests in the hands of one or the
+other is like saying we will either walk or fly; one or the other will
+serve all our needs, and we'll never need anything else.
+
+I obviously find this idea absurd.  I walk, of course, and drive mine
+and other's cars, ride buses, trains, plains, and more as appropriate.
+But the argument that because there are planes I'll never need to walk
+again, or because I can get just about anywhere by walking, I'll never
+need another form of transportation is a ridiculous as the
+single-machine-vs-the-cloud argument that people insist on making.
 
 * Secure connections
 
-Traditional VPNs operate on a master/slave model.  P2P VPNs, what I call VPPNs (Virtual Private Peer Network), allow users to connect resources without a central authority, and with minimal overhead.
+Traditional VPNs operate on a master/slave model.  P2P VPNs, what I
+call VPPNs (Virtual Private Peer Network), allow users to connect
+resources without a central authority, and with minimal overhead.
 
 * Constellations
 
-I define a constellation as a set of computing resources, under a single entity's (presumably but not necessarily a person) control, securely connected, which shares data and resources to better meet the user's current needs.
+I define a constellation as a set of computing resources, under a
+single entity's (presumably but not necessarily a person) control,
+securely connected, which shares data and resources to better meet the
+user's current needs.
 
 * Constellation devices
 
@@ -24,30 +55,101 @@ I define a constellation as a set of computing resources, under a single entity'
 
 * Connecting to friends
 
-A web of trust model, online directory (perhaps based on google's updated finger protocol), or direct connection are the three ways I see to allow constellations to interact at their borders.
+A web of trust model, online directory (perhaps based on google's
+updated finger protocol), or direct connection are the three ways I
+see to allow constellations to interact at their borders.
 
 * Authentication and Services
 
-I envision an apt-sources like configuration of service providers.  Service providers would be defined by a service feed URL, and a cryptographic key to authenticate services against the key of the provider.  This can work both ways, with the user's constellation authenticating the user for security, metering and billing.  The constellation ID and authentication essentially becomes a global user account, under the control of the user.  This model extends the promise of openID, and could perhaps be made to inter-operate with it.  Also of interest is google's initiative to implement finger for the web 2.0 world.
+I envision an apt-sources like configuration of service providers.
+Service providers would be defined by a service feed URL, and a
+cryptographic key to authenticate services against the key of the
+provider.  This can work both ways, with the user's constellation
+authenticating the user for security, metering and billing.  The
+constellation ID and authentication essentially becomes a global user
+account, under the control of the user.  This model extends the
+promise of openID, and could perhaps be made to inter-operate with it.
+Also of interest is google's initiative to implement finger for the
+web 2.0 world.
 
 * Mine, yours, ours, or "can I borrow a cup of cpu?"
 
-Once the concept of mine as applied to a set of interacting computing resources is considered, the logical extensions of yours, ours, and loaning become interesting questions.  For instance, my wife's constellation should be able to borrow unused resources from mine at need.  They should also be able to work together to most efficiently partition any resources they share.  i.e. if I'm downloading something via bit-torrent, and my wife attempts to make a sip call, and both constellations share a common network connection, our respective constellations should be able to negotiate sharing and throttling of applications according to predefined rules.  Similarly, I should be able to "loan" resources to friends ad hoc, without ever having to move, power down, configure, or otherwise modify my constellation.
+Once the concept of mine as applied to a set of interacting computing
+resources is considered, the logical extensions of yours, ours, and
+loaning become interesting questions.  For instance, my wife's
+constellation should be able to borrow unused resources from mine at
+need.  They should also be able to work together to most efficiently
+partition any resources they share.  i.e. if I'm downloading something
+via bit-torrent, and my wife attempts to make a sip call, and both
+constellations share a common network connection, our respective
+constellations should be able to negotiate sharing and throttling of
+applications according to predefined rules.  Similarly, I should be
+able to "loan" resources to friends ad hoc, without ever having to
+move, power down, configure, or otherwise modify my constellation.
 
 * The special problem of smart cell phones, (the iphone)
 
-There is an inherent tension between cell providers and the unum model.  Network providers and current manufactures lock down their networks and devices in order partition services and sell them to users individually for maximum revenue.  With all communications in a constellation encrypted, this model is completely broken.  A completely open device, paying solely for connectivity, is obviously in the user's interests; if providers will allow it is another question.
+There is an inherent tension between cell providers and the unum
+model.  Network providers and current manufactures lock down their
+networks and devices in order partition services and sell them to
+users individually for maximum revenue.  With all communications in a
+constellation encrypted, this model is completely broken.  A
+completely open device, paying solely for connectivity, is obviously
+in the user's interests; if providers will allow it is another
+question.
+
+* Never restart
+
+Great systems can deal with change without restarting; using a lisp
+system, we can load/reload code without restarting the system as a
+whole.  By using advice and a (slime based?) repl, we can modify the
+local system at run time; the question is can we translate this
+paradigm to work across the constellation?  What does it mean to load
+new code across a hetrogeneous system?
+
+* customization, advice, and hooks
+
+There should be a .emacs style file to allow the system to be easily
+scripted, how should that be implemented?  How to implement advice and
+hooks, which I think will be invaluable?
+
+* Single user space/tray app for the time being, zookeeper on 10.17.74.1
+
+Separate into daemon/interface later; avoid rmi issues for the time
+being.
+
+* Software designed for the constellation
+
+How will we structure software that is greater than a single machine,
+but not internet scale?  Is there such a thing? Will tasks shift to
+the nearest idle machine, to make the machine we're on as responsive
+as possible?
 
 * Always secure connection between machines, even on a local network.
 
-While there would be efficiencies to be had by detecting the potential for unencrypted direct connections on the local network, I feel the value of knowing all traffic on your constellation is secure from the outside world, (because it is encrypted/decrypted by the network stack on all machines), is difficult to overstate.  This model tips the balance of power to the individual away from local or remote connection providers, (i.e. the local lan, or your ISP).
+While there would be efficiencies to be had by detecting the potential
+for unencrypted direct connections on the local network, I feel the
+value of knowing all traffic on your constellation is secure from the
+outside world, (because it is encrypted/decrypted by the network stack
+on all machines), is difficult to overstate.  This model tips the
+balance of power to the individual away from local or remote
+connection providers, (i.e. the local lan, or your ISP).
 
 * Political power, or the constellation as the 2nd Amendment of the 21st century.
 
-DDOS attacks have usually been carried out with networks of unwitting compromised machines, while the director of the attack remains hidden.  The unum concept, and it's ability to link with others and non-anonymously attack third parties. This provides an important safety valve in the computing era; you can carry out attacks, but you have to take responsibility for your actions.
+DDOS attacks have usually been carried out with networks of unwitting
+compromised machines, while the director of the attack remains hidden.
+The unum concept, and it's ability to link with others and
+non-anonymously attack third parties. This provides an important
+safety valve in the computing era; you can carry out attacks, but you
+have to take responsibility for your actions.
 
 * IM as the command line of the constellation
 
 * xml or s-exps?
 
-TODO: review paper by Steve Yeggie
+TODO: review paper on xml & s-exps by Steve Yeggie
+TODO: review N2N paper
+TODO: review blog entry on N2N from dist. database startup
+TODO: review RMS paper on cloud computing
+

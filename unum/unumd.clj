@@ -12,6 +12,15 @@
 ;  (:import (java.net InetAddress))
   )
 
+; Create/define/load basic unum infrastructure (hooks, advice, etc.), then load .unum
+; (load-file (str (java.lang.System/getProperty "user.home") "/.unum/unumrc"))
+
+; Put the system tray stuff in this file
+;(java.awt.SystemTray/isSupported)
+;(def tray (java.awt.SystemTray/getSystemTray))
+; java.awt.TrayIcon
+; java.awt.Image
+
 (connect)
 
 ;Register the hostname in static
