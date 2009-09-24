@@ -1,0 +1,67 @@
+<project name="default" default="compile">
+  <property file="build.properties" />
+  <target name="verifyRunProperties">
+    <fail unless="app"> You need to have a variable 'app' in your build.properties file set to a Clojure namespace (e.g.: com.company.app.main). For further explanation, see the simplest :gen-class example on the compilation page of the Clojure website.
+    </fail>
+    <fail unless="app_jar">You need to have a variable 'app_jar' in your build.properties file set to the name of the resulting jar file.
+    </fail>
+  </target>
+  <target name="verifyCompileProperties" depends="verifyRunProperties">
+    <fail unless="clojure_jar">You need to have a variable 'clojure_jar' in your build.properties file set to the full path to the clojure.jar file.
+    </fail>
+    <fail unless="contrib_jar">You need to have a variable 'contrib_jar' in your build.properties file set to the full path to the clojure-contrib.jar file.
+    </fail>
+    <fail unless="app_file">You need to have a variable 'app_dir' in your build.properties file set to the relative path to your main file (e.g.: com/company/app/main.clj).
+    </fail>
+    <fail unless="vendor">You need to have a variable 'vendor' in your build.properties file set to the name of the application's Author.
+    </fail>
+    <fail unless="title">You need to have a variable 'title' in your build.properties file set to the name of the application.
+    </fail>
+    <fail unless="version">You need to have a variable 'version' in your build.properties file set to the version of the application.
+    </fail>
+    <fail message="You must have your application's main file at the location specified by the variable 'app_file' (${app_file}).">
+      <condition>
+	<not>
+	  <available file="${app_file}" />
+	</not>
+      </condition>
+    </fail>
+  </target>
+  <target name="compile" depends="verifyCompileProperties">
+    <echo message="Compiling ${app}" />
+    <mkdir dir="classes" />
+    <java classname="clojure.lang.Compile" fork="true" failonerror="true">
+      <classpath>
+	<pathelement location="." />
+	<pathelement location="./classes" />
+	<pathelement location="${clojure_jar}" />
+	<pathelement location="${contrib_jar}" />
+      </classpath>
+      <sysproperty key="clojure.compile.path" value="./classes" />
+      <arg value="${app}" />
+    </java>
+    <jar destfile="${app_jar}" basedir="classes" index="true">
+      <zipfileset src="${clojure_jar}" includes="**/*.class" />
+      <zipfileset src="${contrib_jar}" includes="**/*.class" />
+      <manifest>
+	<attribute name="Implementation-Vendor" value="${vendor}" />
+	<attribute name="Implementation-Title" value="${title}" />
+	<attribute name="Implementation-Version" value="${version}" />
+	<attribute name="Main-Class" value="${app}" />
+	<attribute name="Class-Path" value="." />
+      </manifest>
+    </jar>
+    <delete dir="./classes" />
+  </target>
+  <target name="run" depends="verifyRunProperties">
+    <fail message="There is no ${app_jar} JAR file. You must execute the command 'ant' before you execute 'ant run'.">
+      <condition>
+	<not>
+	  <available file="${app_jar}" />
+	</not>
+      </condition>
+    </fail>
+    <echo message="Running ${app}" />
+    <java jar="${app_jar}" fork="true" failonerror="true" />
+  </target>
+</project>

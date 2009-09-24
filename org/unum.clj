@@ -102,6 +102,6 @@
   ([]
      (setup-menu)
      (.add tray tray-icon))
-  ([aaa]
+  ([& args]
      (println "in the wrong place?")))
 
