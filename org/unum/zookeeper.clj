@@ -1,16 +1,22 @@
-(ns zookeeper
+(ns org.unum.zookeeper
   ;(:use clojure.contrib.str-utils)
+  (:use clojure.set)
   (:import (org.apache.zookeeper ZooKeeper Watcher CreateMode ZooDefs$Ids))
   (:import (org.apache.zookeeper.data Stat ACL))
   (:import (java.net InetAddress))
 )
+
+;; ---------- exception aliases ----------
+; hmm, doesn't work this way, dammit, catch resolves wrong name
+(def zk-connection-loss-exception org.apache.zookeeper.KeeperException$ConnectionLossException)
+(def zk-node-exists-exception org.apache.zookeeper.KeeperException$NodeExistsException)
 
 ; Would you use a watcher as a ref, atom, agent, or something else?
 ; perhaps just pass in the function that updates?
 
 (def hostname (.getHostName (InetAddress/getLocalHost)))
 
-(defn connect
+(defn- connect
   "Connect to a zookeeper server, defaults to '10.17.74.1:2181'"
   ;TODO: add chroot suffix option?  i.e. '10.17.74.1:2181/chroot/path'
   ;TODO: allow session timeout to be specified?
@@ -21,8 +27,8 @@
   ([zk_server] (def zk (try
 			(ZooKeeper. zk_server 3000 nil)
 			(catch org.apache.zookeeper.KeeperException$ConnectionLossException _ (do
-												(println "Zookeeper not reachable.")
-												(System/exit 1)))))))
+								(println "Zookeeper not reachable.")
+								(System/exit 1)))))))
 
 
 
@@ -58,13 +64,63 @@
 (defn create-temp-znode [path data]
   (.create zk path (.getBytes data) ZooDefs$Ids/OPEN_ACL_UNSAFE CreateMode/EPHEMERAL))
 
+(defn create-named-znode [pth]
+  (fn []
+    (let [path pth]
+      (when-not (znode-exists? path)
+	(create-perm-znode path "")))))
+
+(def create-account-znode
+     (create-named-znode "/unum/accounts"))
+
+(def create-service-znode
+     (create-named-znode "/unum/services"))
+
+
+(defn- initial-setup []
+  (do
+    (create-account-znode)
+    (create-service-znode)))
+
+(defn- register []
+  (let [path (str "/unum/static/" hostname)
+	now (str (System/currentTimeMillis))] ;in milliseconds!
+    (when-not (znode-exists? path)
+      (create-perm-znode path now))))
+
+;org.apache.zookeeper.KeeperException$NodeExistsException: KeeperErrorCode = NodeExists for /unum/current/godel
+(defn- logon []
+  (let [path (str "/unum/current/" hostname)
+	now (str (System/currentTimeMillis))] ;in milliseconds!
+    (try
+     (create-temp-znode path now)
+     (catch  org.apache.zookeeper.KeeperException$NodeExistsException _ (do
+					 (println "Node Exists, try again in a few seconds")
+					 (System/exit 1))))
+    ))
+
+
+(defn do-zookeeper [zookeeper-host]
+  (try
+   (connect zookeeper-host)
+   (initial-setup)
+   (catch org.apache.zookeeper.KeeperException$ConnectionLossException _ (do
+					   (println "Unable to connect to zookeeper.")
+					   (System/exit 1))))
+  (register)
+  (logon)
+  (let [perm (get-znode-children "/unum/static")
+	cur (get-znode-children "/unum/current")]
+    (do
+      (println perm)
+      (println cur)
+      (println (difference perm cur)))))
+
 
 
 ; (CreateMode/EPHEMERAL)
-
 ;(.setData zk "/unum" (.getBytes "It worked!") -1)
-
 ;(println (.exists zk "/foobar" false))
-
-;(.create zk "/foobar" (.getBytes "new data") ZooDefs$Ids/OPEN_ACL_UNSAFE CreateMode/EPHEMERAL)
+;(.create zk "/foobar" (.getBytes "new data")
+;            ZooDefs$Ids/OPEN_ACL_UNSAFE CreateMode/EPHEMERAL)
 ;(createTempZNode "/foobar" "my test")

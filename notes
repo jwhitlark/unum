@@ -21,3 +21,17 @@ $ jar cfe hello.jar net.dishevelled.hello -C classes .
 $ java -jar hello.jar
 
 Hello, world!
+
+
+Loading image from jar
+
+images is a top level dir in the jar
+
+How to read:
+java.net.URL imageURL = myDemo.class.getResource("images/myImage.gif");
+...
+if (imageURL != null) {
+    ImageIcon icon = new ImageIcon(imageURL);
+
+How to compile:
+?

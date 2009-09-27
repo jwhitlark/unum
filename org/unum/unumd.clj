@@ -15,13 +15,6 @@
 ; Create/define/load basic unum infrastructure (hooks, advice, etc.), then load .unum
 ; (load-file (str (java.lang.System/getProperty "user.home") "/.unum/unumrc"))
 
-; Put the system tray stuff in this file
-;(java.awt.SystemTray/isSupported)
-;(def tray (java.awt.SystemTray/getSystemTray))
-; java.awt.TrayIcon
-; java.awt.Image
-
-(connect)
 
 ;Register the hostname in static
 ;Register the hostname in current
@@ -30,40 +23,6 @@
   (Thread/sleep (* secs 1000)))
 
 ; This is duplicated with the register stuff lower, find a way to collapse it.
-(defn create-named-znode [pth]
-  (fn []
-    (let [path pth]
-      (when-not (znode-exists? path)
-	(create-perm-znode path "")))))
-
-(def create-account-znode
-     (create-named-znode "/unum/accounts"))
-
-(def create-service-znode
-     (create-named-znode "/unum/services"))
-
-
-(defn initial-setup []
-  (do
-    (create-account-znode)
-    (create-service-znode)))
-
-(defn register []
-  (let [path (str "/unum/static/" hostname)
-	now (str (System/currentTimeMillis))] ;in milliseconds!
-    (when-not (znode-exists? path)
-      (create-perm-znode path now))))
-
-;org.apache.zookeeper.KeeperException$NodeExistsException: KeeperErrorCode = NodeExists for /unum/current/godel
-(defn logon []
-  (let [path (str "/unum/current/" hostname)
-	now (str (System/currentTimeMillis))] ;in milliseconds!
-    (try
-     (create-temp-znode path now)
-     (catch org.apache.zookeeper.KeeperException$NodeExistsException _ (do
-									 (println "Node Exists, try again in a few seconds")
-									 (System/exit 1))))
-     ))
 
 
 (defn unum-test []
@@ -91,6 +50,7 @@
 
 ;(unum-test)
 (try
+ (connect)
  (initial-setup)
  (catch org.apache.zookeeper.KeeperException$ConnectionLossException _ (do
 									 (println "Unable to connect to zookeeper.")
@@ -106,7 +66,7 @@
     (println cur)
     (println (difference perm cur))))
 
-(loop [] (recur))
+;(loop [] (recur))
 
 ; dbus stuff  -- This is dead; the java dbus library sucks
 ;(import '(org.freedesktop.dbus DBusConnection))
