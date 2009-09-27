@@ -1,0 +1,23 @@
+$ mkdir -p net/dishevelled
+
+$ cat > net/dishevelled/hello.clj
+(ns net.dishevelled.hello
+  (:gen-class :main true))
+
+(defn -main []
+  (println "Hello, world!"))
+
+$ mkdir classes
+
+$ java -cp /usr/local/lib/clojure.jar:classes:. clojure.main -e "(compile 'net.dishevelled.hello)" net.dishevelled.hello
+
+$ java -cp /usr/local/lib/clojure.jar:classes:. net.dishevelled.hello
+Hello, world!
+
+$ (cd classes; jar xf /usr/local/lib/clojure.jar)
+
+$ jar cfe hello.jar net.dishevelled.hello -C classes .
+
+$ java -jar hello.jar
+
+Hello, world!
