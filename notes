@@ -35,3 +35,33 @@ if (imageURL != null) {
 
 How to compile:
 ?
+
+
+hooks and events:
+
+events are just keywords, :host-joined
+
+(def event-queue (ref []))
+(def event-dispatch (ref {}))
+
+In transaction, conj event to event-queue
+
+A single thread reads event-queue, blocking if it's empty.  When it
+gets an event, it looks it up in event-dispatch, and calls all the
+functions, (if any), that are in the list.
+
+(defn run-hook []
+  (apply pcalls (@event-dispatch hook)))
+
+(create-hook hook)
+(add-hook hook fn)
+(remove-hook hook fn?)
+(clear-hook hook)
+
+Hooks:
+:host-joined-hook
+:host-registered-hook
+:host-disconnected-hook
+:kill-unum-hook
+
+Will there be such a thing as abnormal hooks?

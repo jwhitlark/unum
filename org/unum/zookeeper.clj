@@ -6,31 +6,37 @@
   (:import (java.net InetAddress))
 )
 
+;; ---------- Zookeeper state ----------
+; all-hosts
+; connected-hosts
+
 ;; ---------- exception aliases ----------
 ; hmm, doesn't work this way, dammit, catch resolves wrong name
 (def zk-connection-loss-exception org.apache.zookeeper.KeeperException$ConnectionLossException)
 (def zk-node-exists-exception org.apache.zookeeper.KeeperException$NodeExistsException)
 
-; Would you use a watcher as a ref, atom, agent, or something else?
-; perhaps just pass in the function that updates?
-
+;; This should move elsewhere, how to handle stuff like this? can't
+;; use (declare hostname) in this case, apparently
 (def hostname (.getHostName (InetAddress/getLocalHost)))
 
+
+;; ---------- Zookeeper primitives ----------
 (defn- connect
   "Connect to a zookeeper server, defaults to '10.17.74.1:2181'"
   ;TODO: add chroot suffix option?  i.e. '10.17.74.1:2181/chroot/path'
   ;TODO: allow session timeout to be specified?
   ;TODO: pass in a watcher instead of nil?  have a watcher passed back?
   ;Question: should this be a multimethod to switch on type?
+  ;TODO: remove hard coded zk address
   ([] (connect "10.17.74.1:2181"))
-;; TODO: following doesn't have any effect, why?
   ([zk_server] (def zk (try
 			(ZooKeeper. zk_server 3000 nil)
 			(catch org.apache.zookeeper.KeeperException$ConnectionLossException _ (do
 								(println "Zookeeper not reachable.")
 								(System/exit 1)))))))
 
-
+; Would you use a watcher as a ref, atom, agent, or something else?
+; perhaps just pass in the function that updates?
 
 ; create and return a Watcher proxy - works! Damn, but clojure is cool.
 (defn watcher
@@ -70,37 +76,40 @@
       (when-not (znode-exists? path)
 	(create-perm-znode path "")))))
 
-(def create-account-znode
-     (create-named-znode "/unum/accounts"))
 
-(def create-service-znode
-     (create-named-znode "/unum/services"))
-
+;; ---------- unum zookeeper functions ----------
+(def create-account-znode (create-named-znode "/unum/accounts"))
+(def create-service-znode (create-named-znode "/unum/services"))
 
 (defn- initial-setup []
+  "Initialize a brand new zookeeper"
   (do
     (create-account-znode)
     (create-service-znode)))
 
+
 (defn- register []
+  "Register this host name with zookeeper"
+  ;; TODO: Add logic to ensure that multiple hosts don't try to use
+  ;; the same name
   (let [path (str "/unum/static/" hostname)
 	now (str (System/currentTimeMillis))] ;in milliseconds!
     (when-not (znode-exists? path)
       (create-perm-znode path now))))
 
-;org.apache.zookeeper.KeeperException$NodeExistsException: KeeperErrorCode = NodeExists for /unum/current/godel
 (defn- logon []
+  "Log this host onto zookeeper."
   (let [path (str "/unum/current/" hostname)
 	now (str (System/currentTimeMillis))] ;in milliseconds!
     (try
      (create-temp-znode path now)
-     (catch  org.apache.zookeeper.KeeperException$NodeExistsException _ (do
+     (catch org.apache.zookeeper.KeeperException$NodeExistsException _ (do
 					 (println "Node Exists, try again in a few seconds")
-					 (System/exit 1))))
-    ))
+					 (System/exit 1))))))
 
 
 (defn do-zookeeper [zookeeper-host]
+  "Main entry point for zookeeper functionality."
   (try
    (connect zookeeper-host)
    (initial-setup)
