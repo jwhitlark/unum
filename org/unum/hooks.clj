@@ -1,6 +1,8 @@
 (ns org.unum.hooks
   )
 
+;; see http://www.gnu.org/software/emacs/manual/html_node/emacs/Hooks.html
+
 ;; Should standard functionality be implemented via hooks? It would be
 ;; easy, but might let people break the system.  Perhaps two levels of
 ;; hooks? system-hook and hook? implemented via meta-data?
