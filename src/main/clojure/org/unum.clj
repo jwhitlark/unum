@@ -15,7 +15,7 @@
 (def user-home (java.lang.System/getProperty "user.home"))
 ; Need a square image to deal with transparency issues.
 (def toolkit (Toolkit/getDefaultToolkit))
-(def image-url (ClassLoader/getSystemResource "images/icon.png"))
+(def image-url (ClassLoader/getSystemResource "icon.png"))
 (def tray-icon (TrayIcon. (.getScaledInstance (.getImage toolkit image-url) 24 24 1) "Unum Constellation Manager" ))
 (def tray (java.awt.SystemTray/getSystemTray))
 (def popup (PopupMenu.))
@@ -88,4 +88,4 @@
 
 (add-hook :kill-unum-hook #(println "YEAH! kill unum hook works!"))
 ; Tricky, need this for running outside of jar?
-(-main)
+;(-main)
