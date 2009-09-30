@@ -5,20 +5,28 @@
   (:use [org.unum.zookeeper])
   (:use [org.unum.hooks])
   (:import [java.io File])
+  (:import [javax.swing UIManager])
   (:import [javax.imageio ImageIO])
   (:import (java.net InetAddress))
   (:import [java.awt TrayIcon Toolkit PopupMenu MenuItem Menu CheckboxMenuItem])
   (:gen-class))
+
+
+  ;; Use the operating system native UI look and feel, do not use the Swing oriented look
+(UIManager/setLookAndFeel "com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
+
 
 ;(def hostname (.getHostName (InetAddress/getLocalHost))) ; already defined in zookeeper
 
 (def user-home (java.lang.System/getProperty "user.home"))
 ; Need a square image to deal with transparency issues.
 (def toolkit (Toolkit/getDefaultToolkit))
+
 (def image-url (ClassLoader/getSystemResource "icon.png"))
 (def tray-icon (TrayIcon. (.getScaledInstance (.getImage toolkit image-url) 24 24 1) "Unum Constellation Manager" ))
 (def tray (java.awt.SystemTray/getSystemTray))
 (def popup (PopupMenu.))
+
 
 (defn send-tray-message [title msg]
   "Use swing tray to popup a notification box"
