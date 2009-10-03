@@ -1,5 +1,7 @@
 (ns org.unum
   (:use [clojure.contrib.swing-utils])
+  (:use [clojure.contrib.command-line])
+  (:use [clojure.contrib.server-socket :only (create-repl-server)])
   (:use [org.unum.synergy :only (synergy-command)])
   (:use [org.unum.notify :only (notify-send)])
   (:use [org.unum.zookeeper])
@@ -12,9 +14,8 @@
   (:gen-class))
 
 
-  ;; Use the operating system native UI look and feel, do not use the Swing oriented look
+;; Use the operating system native UI look and feel, do not use the Swing oriented look
 (UIManager/setLookAndFeel "com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
-
 
 ;(def hostname (.getHostName (InetAddress/getLocalHost))) ; already defined in zookeeper
 
@@ -22,8 +23,8 @@
 ; Need a square image to deal with transparency issues.
 (def toolkit (Toolkit/getDefaultToolkit))
 
-(def image-url (ClassLoader/getSystemResource "icon.png"))
-(def tray-icon (TrayIcon. (.getScaledInstance (.getImage toolkit image-url) 24 24 1) "Unum Constellation Manager" ))
+(def icon-image (.getImage toolkit (ClassLoader/getSystemResource "icon.png")))
+(def tray-icon (TrayIcon. (.getScaledInstance icon-image 24 24 1) "Unum Constellation Manager" ))
 (def tray (java.awt.SystemTray/getSystemTray))
 (def popup (PopupMenu.))
 
@@ -49,10 +50,14 @@
 (defn popup-listener-callback [& args]
   (println "popup called"))
 
+(defn start-repl-on-socket [& args]
+  (create-repl-server 9999))
+
 (defn setup-menu []
   (let [exitItem (MenuItem. "Exit")
 	synergyItem (MenuItem. "Synergy")
 	IdentifyItem (MenuItem. "Identify")
+	replServerItem (MenuItem. "REPL socket server")
 	bsItem (MenuItem. "NA")
 	machineMenu (Menu. "Members")
 	configMenu (Menu. "Configuration")
@@ -64,6 +69,7 @@
       (.add IdentifyItem)
       (.add machineMenu)
       (.add configMenu)
+      (.add replServerItem)
       (.addSeparator)
       (.add exitItem))
 
@@ -76,24 +82,34 @@
     (add-action-listener exitItem exit)
     (add-action-listener synergyItem synergy-command)
     (add-action-listener popup popup-listener-callback)
+    (add-action-listener replServerItem start-repl-on-socket)
     (.setPopupMenu tray-icon popup)))
+
+(defn exit-if-no-system-tray []
+  (if-not (java.awt.SystemTray/isSupported)
+    (do (println "System Tray is not supported")
+	(System/exit 0))))
+
+(defn load-rc []
+  (load-file (str user-home "/.unumrc")))
 
 ; Should left click mean anything?
 ; Should this spin off in another thread?
 (defn -main
   ([& args]
-     (if-not (java.awt.SystemTray/isSupported)
-       (do (println "System Tray is not supported")
-	   (System/exit 0)))
+     (let [headless? (contains? (set args) "--headless")]
+       (when-not headless?
+	 (exit-if-no-system-tray))
+       (do-hooks)
+       (load-rc)
+       (println "Connecting to zookeeper")
+       ;;TODO: Wrap following in let and check for nil
+       (do-zookeeper @(ns-resolve 'org.unum.rc 'zk-address))
+       (println "Connected to zookeeper")
+       (when-not headless?
+	 (setup-menu)
+	 (.add tray tray-icon))
+       )))
 
-     (println "Connecting to zookeeper")
-     ;; local-network for testing (do-zookeeper "192.168.1.4:2181")
-     (do-zookeeper "10.17.74.1:2181")
-     (println "Connected to zookeeper")
-     (setup-menu)
-     (.add tray tray-icon)
-     (do-hooks)))
-
-(add-hook :kill-unum-hook #(println "YEAH! kill unum hook works!"))
 ; Tricky, need this for running outside of jar?
 ;(-main)
