@@ -46,6 +46,15 @@
       <plugin>
         <groupId>com.theoryinpractise</groupId>
         <artifactId>clojure-maven-plugin</artifactId>
+	<executions>
+	  <execution>
+	    <id>simple-command</id>
+	    <phase>compile</phase>
+	    <goals>
+	      <goal>compile</goal>
+	    </goals>
+	  </execution>
+	</executions>
       </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
@@ -59,6 +68,15 @@
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
         </configuration>
+	<executions>
+	  <execution>
+	    <id>simple-command</id>
+	    <phase>package</phase>
+	    <goals>
+	      <goal>attached</goal>
+	    </goals>
+	  </execution>
+	</executions>
       </plugin>
     </plugins>
   </build>

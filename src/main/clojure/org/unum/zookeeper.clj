@@ -7,8 +7,8 @@
 )
 
 ;; ---------- Zookeeper state ----------
-; all-hosts
-; connected-hosts
+(def registered-hosts (atom nil))
+(def connected-hosts (atom nil))
 
 ;; ---------- exception aliases ----------
 ; hmm, doesn't work this way, dammit, catch resolves wrong name
@@ -21,6 +21,12 @@
 
 
 ;; ---------- Zookeeper primitives ----------
+(defn start-registry-server
+  "Run zookeeper, should this be blocking?"
+  ;; TODO: run zookeeper (only accept connections from localhost and n2n network)
+  ;; TODO: advertise zookeeper via zeroconf (only on n2n network)
+  ([] (println "registry (should be) started here")))
+
 (defn- connect
   "Connect to a zookeeper server, defaults to '10.17.74.1:2181'"
   ;TODO: add chroot suffix option?  i.e. '10.17.74.1:2181/chroot/path'
@@ -50,10 +56,15 @@
 
 
 (defn get-znode-data [path]
+  ;; wire up th set watcher...
   (String. (.getData zk path false (Stat.))))
 
-(defn get-znode-children [path]
- (set (.getChildren zk path false)))
+(defn get-znode-children
+  ([path]
+     (set (.getChildren zk path false)))
+  ([path fn]
+     ;; FIXME: wire up callback function properly, currently isn't working
+     (set (.getChildren zk path (watcher fn)))))
 
 (defn set-znode-data [path value]
   (.setData zk path (.getBytes value) -1))
@@ -78,6 +89,15 @@
 
 
 ;; ---------- unum zookeeper functions ----------
+(defn update-connected-hosts []
+  "Get the connected host list, and set a watch to update it next time
+it changes."
+  ;; Fixme: should set a watch when it gets the children, not working at the moment
+  (reset! connected-hosts (apply sorted-set (get-znode-children "/unum/current" update-connected-hosts))))
+
+(defn update-registered-hosts []
+  (reset! registered-hosts (apply sorted-set (get-znode-children "/unum/static"))))
+
 (def create-account-znode (create-named-znode "/unum/accounts"))
 (def create-service-znode (create-named-znode "/unum/services"))
 

@@ -20,6 +20,9 @@
 
 ;(def hostname (.getHostName (InetAddress/getLocalHost))) ; already defined in zookeeper
 
+; Tell swank not to be picky, this should go somewhere else...
+(ignore-protocol-version "2009-03-09")
+
 (def user-home (java.lang.System/getProperty "user.home"))
 ; Need a square image to deal with transparency issues.
 (def toolkit (Toolkit/getDefaultToolkit))
@@ -29,6 +32,8 @@
 (def tray (java.awt.SystemTray/getSystemTray))
 (def popup (PopupMenu.))
 
+;; Stuff to hold the pointer to the machine menu
+(declare machine-menu-obj)
 
 (defn send-tray-message [title msg]
   "Use swing tray to popup a notification box"
@@ -36,6 +41,9 @@
 
 (defn sleep [secs]
   (Thread/sleep (* secs 1000)))
+
+(defn update-machine-menu []
+  "")
 
 ;; ---------- menu items ----------
 (defn Identify [& args]
@@ -52,14 +60,14 @@
   (println "popup called"))
 
 (defn start-repl-on-socket [& args]
-  (create-repl-server 9999))
+  (do
+    (println "starting socket repl on port 9999")
+    (create-repl-server 9999)))
 
 (defn start-swank-on-socket [& args]
-  ;(require 'swank.swank)
   (do
-    (ignore-protocol-version "2009-03-09")
-    (start-server "/tmp/slime.20900" :encoding "iso-latin-1-
-unix" :port 9998)))
+    (println "starting slime (swank) repl on port 9998")
+    (start-server "/tmp/slime.20900" :encoding "iso-latin-1-unix" :port 9998)))
 
 (defn setup-menu []
   (let [exitItem (MenuItem. "Exit")
@@ -72,28 +80,33 @@ unix" :port 9998)))
 	configMenu (Menu. "Configuration")
 	;; cbItem (CheckboxMenuItem. "running")
 	]
+    ;link this up so we can manipulate it later.
+    (def machine-menu-obj machineMenu)
     (doto popup
       ;; (.add cbItem)
       (.add synergyItem)
       (.add IdentifyItem)
       (.add machineMenu)
       (.add configMenu)
-      (.add replServerItem)
-      (.add swankServerItem)
       (.addSeparator)
       (.add exitItem))
 
-    (.add machineMenu bsItem)
+    (doto configMenu
+      (.add replServerItem)
+      (.add swankServerItem))
 
-    (.setEnabled configMenu false)
+;    (.add machineMenu bsItem)
+
     (.setEnabled bsItem false)
     ;; ----- action listeners -----
     (add-action-listener IdentifyItem Identify)
     (add-action-listener exitItem exit)
     (add-action-listener synergyItem synergy-command)
     (add-action-listener popup popup-listener-callback)
+    ;; configMenu
     (add-action-listener replServerItem start-repl-on-socket)
     (add-action-listener swankServerItem start-swank-on-socket)
+
     (.setPopupMenu tray-icon popup)))
 
 (defn exit-if-no-system-tray []
@@ -104,11 +117,15 @@ unix" :port 9998)))
 (defn load-rc []
   (load-file (str user-home "/.unumrc")))
 
-; Should left click mean anything?
-; Should this spin off in another thread?
+; add command line option to just run registry (zookeeper)?  Handy...
 (defn -main
   ([& args]
-     (let [headless? (contains? (set args) "--headless")]
+     (let [registry? (contains? (set args) "--serve-registry")
+	   headless? (or registry? (contains? (set args) "--headless"))]
+       (if registry?
+	 (do
+	   (start-registry-server)
+	   (System/exit 0)))
        (when-not headless?
 	 (exit-if-no-system-tray))
        (do-hooks)
@@ -119,8 +136,13 @@ unix" :port 9998)))
        (println "Connected to zookeeper")
        (when-not headless?
 	 (setup-menu)
+	 (update-machine-menu)
 	 (.add tray tray-icon))
        )))
 
 ; Tricky, need this for running outside of jar?
 ;(-main)
+
+;;TODO: add git pre-commit-hook to bump build number of pom, or
+;;perhaps minor, with the pom updating its build number each compile
+
