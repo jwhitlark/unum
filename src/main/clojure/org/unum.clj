@@ -2,6 +2,7 @@
   (:use [clojure.contrib.swing-utils])
   (:use [clojure.contrib.command-line])
   (:use [clojure.contrib.server-socket :only (create-repl-server)])
+  (:use [swank.swank])
   (:use [org.unum.synergy :only (synergy-command)])
   (:use [org.unum.notify :only (notify-send)])
   (:use [org.unum.zookeeper])
@@ -53,11 +54,19 @@
 (defn start-repl-on-socket [& args]
   (create-repl-server 9999))
 
+(defn start-swank-on-socket [& args]
+  ;(require 'swank.swank)
+  (do
+    (ignore-protocol-version "2009-03-09")
+    (start-server "/tmp/slime.20900" :encoding "iso-latin-1-
+unix" :port 9998)))
+
 (defn setup-menu []
   (let [exitItem (MenuItem. "Exit")
 	synergyItem (MenuItem. "Synergy")
 	IdentifyItem (MenuItem. "Identify")
 	replServerItem (MenuItem. "REPL socket server")
+	swankServerItem (MenuItem. "SWANK socket server")
 	bsItem (MenuItem. "NA")
 	machineMenu (Menu. "Members")
 	configMenu (Menu. "Configuration")
@@ -70,6 +79,7 @@
       (.add machineMenu)
       (.add configMenu)
       (.add replServerItem)
+      (.add swankServerItem)
       (.addSeparator)
       (.add exitItem))
 
@@ -83,6 +93,7 @@
     (add-action-listener synergyItem synergy-command)
     (add-action-listener popup popup-listener-callback)
     (add-action-listener replServerItem start-repl-on-socket)
+    (add-action-listener swankServerItem start-swank-on-socket)
     (.setPopupMenu tray-icon popup)))
 
 (defn exit-if-no-system-tray []
