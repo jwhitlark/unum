@@ -65,3 +65,24 @@ Hooks:
 :kill-unum-hook
 
 Will there be such a thing as abnormal hooks?
+
+
+defining advice macro...
+
+(def func-name-before (ref []))
+(def func-name-after (ref []))
+(call-all-func-name-after (defn func-name [(call-all-func-name-before]
+  (body))))
+
+
+
+(defadvice func-name []
+  body)
+
+(add-advice-before func-name func)
+->
+(dosync (alter func-name-before conj func))
+
+; This works, as far as it goes...
+(defmacro defadvice [func-name args body]
+  (list 'def (symbol (str *ns*) (str func-name "-before")) '(ref [])))

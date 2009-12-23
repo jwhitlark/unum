@@ -127,12 +127,12 @@
 	   (start-registry-server)
 	   (System/exit 0)))
        (when-not headless?
-	 (exit-if-no-system-tray))
+	; (exit-if-no-system-tray))
        (do-hooks)
        (load-rc)
        (println "Connecting to zookeeper")
        ;;TODO: Wrap following in let and check for nil
-       (do-zookeeper @(ns-resolve 'org.unum.rc 'zk-address))
+;       (do-zookeeper @(ns-resolve 'org.unum.rc 'zk-address))
        (println "Connected to zookeeper")
        (when-not headless?
 	 (setup-menu)
@@ -141,7 +141,7 @@
        )))
 
 ; Tricky, need this for running outside of jar?
-;(-main)
+(-main)
 
 ;;TODO: add git pre-commit-hook to bump build number of pom, or
 ;;perhaps minor, with the pom updating its build number each compile

@@ -137,6 +137,7 @@ class main_interface(object):
     def __init__(self, unum_hosts, icon):
         self.all_hosts = unum_hosts[0]
         self.live_hosts = unum_hosts[1]
+        self.current_host = unum_hosts[2]
         self.icon = icon
         self.menu = gtk.Menu()
         self.stars = {}
@@ -167,7 +168,7 @@ class main_interface(object):
         """
         for machine in sorted(self.all_hosts):
             submenu_item = gtk.MenuItem(machine)
-            if machine not in self.current_host:
+            if machine not in self.live_hosts:
                 submenu_item.set_sensitive(False)
             self.menu.append(submenu_item)
             submenu = gtk.Menu()
@@ -260,6 +261,7 @@ def main(unum_hosts, ipython=False):
     # menu_update_thread.start()
 
 if __name__ == '__main__':
-    main(unum_hosts, True)
+    unum_hosts = [['utopia', 'bohr', 'archive', 'jw-dt'], ['utopia', 'bohr', 'archive'], 'bohr']
+    main(unum_hosts, False)
 
 
