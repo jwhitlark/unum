@@ -137,7 +137,7 @@
        )))
 
 ; Tricky, need this for running outside of jar?
-(-main)
+;(-main)
 
 ;;TODO: add git pre-commit-hook to bump build number of pom, or
 ;;perhaps minor, with the pom updating its build number each compile
