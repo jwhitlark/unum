@@ -4,6 +4,7 @@
 
 (defn notify-send [subject body]
   (sh "notify-send" subject body))
+; TODO: add check that notify-send actually exists...
 
 
 ;; (defn Notify [& args]

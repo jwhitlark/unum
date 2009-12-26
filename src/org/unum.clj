@@ -2,7 +2,7 @@
   (:use [clojure.contrib.swing-utils])
   (:use [clojure.contrib.command-line])
   (:use [clojure.contrib.server-socket :only (create-repl-server)])
-  (:use [swank.swank])
+;  (:use [swank.swank])
   (:use [org.unum.synergy :only (synergy-command)])
   (:use [org.unum.notify :only (notify-send)])
   (:use [org.unum.hooks])
@@ -20,7 +20,7 @@
 (def hostname (.getHostName (InetAddress/getLocalHost)))
 
 ; Tell swank not to be picky, this should go somewhere else...
-(ignore-protocol-version "2009-03-09")
+;(ignore-protocol-version "2009-03-09")
 
 (def user-home (java.lang.System/getProperty "user.home"))
 ; Need a square image to deal with transparency issues.
@@ -63,17 +63,17 @@
     (println "starting socket repl on port 9999")
     (create-repl-server 9999)))
 
-(defn start-swank-on-socket [& args]
-  (do
-    (println "starting slime (swank) repl on port 9998")
-    (start-server "/tmp/slime.20900" :encoding "iso-latin-1-unix" :port 9998)))
+;; (defn start-swank-on-socket [& args]
+;;   (do
+;;     (println "starting slime (swank) repl on port 9998")
+;;     (start-server "/tmp/slime.20900" :encoding "iso-latin-1-unix" :port 9998)))
 
 (defn setup-menu []
   (let [exitItem (MenuItem. "Exit")
 	synergyItem (MenuItem. "Synergy")
 	IdentifyItem (MenuItem. "Identify")
 	replServerItem (MenuItem. "REPL socket server")
-	swankServerItem (MenuItem. "SWANK socket server")
+;	swankServerItem (MenuItem. "SWANK socket server")
 	bsItem (MenuItem. "NA")
 	machineMenu (Menu. "Members")
 	configMenu (Menu. "Configuration")
@@ -91,8 +91,8 @@
       (.add exitItem))
 
     (doto configMenu
-      (.add replServerItem)
-      (.add swankServerItem))
+      (.add replServerItem))
+;      (.add swankServerItem))
 
 ;    (.add machineMenu bsItem)
 
@@ -104,7 +104,7 @@
     (add-action-listener popup popup-listener-callback)
     ;; configMenu
     (add-action-listener replServerItem start-repl-on-socket)
-    (add-action-listener swankServerItem start-swank-on-socket)
+;    (add-action-listener swankServerItem start-swank-on-socket)
 
     (.setPopupMenu tray-icon popup)))
 

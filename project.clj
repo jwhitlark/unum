@@ -6,4 +6,5 @@
                  [org.clojure/clojure-contrib "1.0-SNAPSHOT"]
 		 [clojure-http-client "1.0.0-SNAPSHOT"]
 		 [log4j "1.2.14"]
-		 [org.clojure/swank-clojure "1.0"]])
+		 ;[org.clojure/swank-clojure "1.0"]
+		 ])
