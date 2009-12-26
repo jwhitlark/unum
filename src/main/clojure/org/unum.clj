@@ -5,7 +5,6 @@
   (:use [swank.swank])
   (:use [org.unum.synergy :only (synergy-command)])
   (:use [org.unum.notify :only (notify-send)])
-  (:use [org.unum.zookeeper])
   (:use [org.unum.hooks])
   (:import [java.io File])
   (:import [javax.swing UIManager])
@@ -18,7 +17,7 @@
 ;; Use the operating system native UI look and feel, do not use the Swing oriented look
 (UIManager/setLookAndFeel "com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
 
-;(def hostname (.getHostName (InetAddress/getLocalHost))) ; already defined in zookeeper
+(def hostname (.getHostName (InetAddress/getLocalHost)))
 
 ; Tell swank not to be picky, this should go somewhere else...
 (ignore-protocol-version "2009-03-09")
@@ -124,16 +123,13 @@
 	   headless? (or registry? (contains? (set args) "--headless"))]
        (if registry?
 	 (do
-	   (start-registry-server)
+	   ; This was for starting the registry server
 	   (System/exit 0)))
        (when-not headless?
-	; (exit-if-no-system-tray))
+	 (exit-if-no-system-tray))
        (do-hooks)
        (load-rc)
-       (println "Connecting to zookeeper")
-       ;;TODO: Wrap following in let and check for nil
-;       (do-zookeeper @(ns-resolve 'org.unum.rc 'zk-address))
-       (println "Connected to zookeeper")
+       ;; Here is where we used to connect to zookeeper
        (when-not headless?
 	 (setup-menu)
 	 (update-machine-menu)
