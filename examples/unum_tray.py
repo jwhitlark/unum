@@ -27,11 +27,12 @@ edges = {'left': 'right',
 
 
 def create_synerge_conf(hosts, remote, edge):
+    me = socket.gethostname()
     op_edge = edges[edge]
     output = []
     output.append('section: screens')
-    output.append('\t%s:' % socket.gethostname())
-    for machine in hosts:
+    output.append('\t%s:' % me)
+    for machine in [host for host in hosts if host != me]:
         output.append('\t%s:' % machine)
     output.append('end')
     output.append('section: links')
@@ -46,15 +47,16 @@ def create_synerge_conf(hosts, remote, edge):
 
 ## ----------------- Callbacks
 def help_cb(widget, data=None):
+    help_path=None
     webbrowser.open(help_path)
 
 
-def popup_menu_cb(widget, button, time, data = None):
+def popup_menu_cb(widget, button, how_long, data = None):
     if button == 3:
         if data:
             data.show_all()
-            data.popup(None, None, None, 3, time)
-    pass
+            data.popup(None, None, None, 3, how_long)
+
 
 def activate_icon_cb(widget, data = None):
     msgBox = gtk.MessageDialog(parent = None, buttons = gtk.BUTTONS_OK, message_format = "StatusIcon test.")
@@ -69,6 +71,8 @@ def identify_cb(widget, data=None):
 
 ## ---- plugin callbacks
 def synergy_cb(widget, data=None):
+    #TODO: get remote machine name from widget parent.
+    remote_machine = "utopia"
     # Kill running synergy
     subprocess.call(['pkill', 'synergy'])
     max_x, max_y = get_screen_size()
@@ -92,7 +96,7 @@ def synergy_cb(widget, data=None):
     # generate file
     #FIXME: using global for hosts
     #FIXME: remote host hard coded
-    file_contents = create_synerge_conf(hosts, 'godel', server_screen_edge)
+    file_contents = create_synerge_conf(hosts, remote_machine, server_screen_edge)
     with open("/home/jw/.unum/synergy.conf", 'w') as fh:
         fh.write(file_contents)
     # Start synergy
@@ -102,8 +106,8 @@ def synergy_cb(widget, data=None):
     synergy_callback_thread().start()
     #TODO: this is the stupid way, use paramiko in the future
     # start remote synergy only if not running (or just kill it first)
-    subprocess.call(['ssh', 'godel.local', 'pkill',  'synergy'])
-    subprocess.call(['ssh', 'godel.local', 'nohup', 'synergyc', '%s.local' % socket.gethostname(), '&'])
+    subprocess.call(['ssh', remote_machine + '.local', 'pkill',  'synergy'])
+    subprocess.call(['ssh', remote_machine + '.local', 'nohup', 'synergyc', '%s.local' % socket.gethostname(), '&'])
     # Tell user it worked
     simple_msg("Synergy info", "local host:%s\nlocal edge:%s\nremote host:%s\nremote edge:%s" % (socket.gethostname(), server_screen_edge, 'unknown', remote_edge))
 
@@ -129,12 +133,12 @@ def build_mount_callback(host):
 #                subprocess.call(['gnome-open', '-e', 'sshfs', ' %s.local:' % host, '/home/jw/unum/hosts/%s' % host])
 #                subprocess.call(['gnome-open', '~/unum/hosts/%s' % host])
                 ## FIXME: Change menu to allow unmount
-        callback_thread().start()
+        #callback_thread().start()  # where did this variable name come from?
     return callback
 ## --------------------- End Callbacks
 
 class main_interface(object):
-    def __init__(self, unum_hosts, icon):
+    def __init__(self, unum_hosts, icon):  #TODO: rename unum_hosts, shadows global variable
         self.all_hosts = unum_hosts[0]
         self.live_hosts = unum_hosts[1]
         self.current_host = unum_hosts[2]
@@ -213,6 +217,7 @@ class main_interface(object):
         gtk.main_quit()
 
 def simple_msg(title, msg):
+    icon_path = None
     m = pynotify.Notification(title, msg, icon_path)
     m.show()
 
@@ -249,8 +254,8 @@ def main(unum_hosts, ipython=False):
     # spin GTK off in a background thread
     gtk.gdk.threads_init()
     class gtkmain(threading.Thread):
-      def run(self):
-        gtk.main()
+        def run(self):
+            gtk.main()
     gtkmain().start()
 
     # Try another thread to keep menus reflecting reality here
