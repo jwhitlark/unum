@@ -1,6 +1,7 @@
 (defproject unum "0.1.0-SNAPSHOT"
   :description "From many, one."
   :main org.unum
+  :resources-path "resources"
 ; add all dependencies...
   :dependencies [[org.clojure/clojure "1.1.0-master-SNAPSHOT"]
                  [org.clojure/clojure-contrib "1.0-SNAPSHOT"]
