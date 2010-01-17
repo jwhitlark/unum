@@ -3,6 +3,7 @@
   )
 
 (def toolkit (java.awt.Toolkit/getDefaultToolkit))
+(def edges {:left :right, :right :left, :top :bottom, :bottom :top})
 
 (defn get-screen-size []
   (let [sz (.getScreenSize toolkit)
@@ -27,7 +28,6 @@
 	(= y (dec max_y))	:bottom
 	:default    (recur (get-mouse-location))))))
 
-(def remote-edges {:left :right, :right :left, :top :bottom, :bottom :top})
 
 (defn configure-synergy [edge remote-edge]
   ())
@@ -35,6 +35,14 @@
 (defn synergy-command [& args]
   (notify-send "Synergy Configuration" "Select an edge with the mouse.")
   (let [edge (select-screen-edge)
-	remote-edge (edge remote-edges)]
+	remote-edge (edge edges)]
     (notify-send "Synergy Configuration" (str edge " selected, remote edge will be " remote-edge))
     (configure-synergy edge remote-edge)))
+
+(comment
+(defn setup-and-start-synergy [remote-host local-edge]
+  ((store-local-config remote-host local-edge)
+   (store-remote-config remote-host (edges local-edge))
+   (kill-local-and-remote-synergy)
+   (start-local-and-remote-synergy)))
+)
