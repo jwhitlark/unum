@@ -1,3 +1,5 @@
+;   Copyright (c) Jason Whitlark. All rights reserved.
+
 (ns org.unum.zookeeper
   ;(:use clojure.contrib.str-utils)
   (:use clojure.set)

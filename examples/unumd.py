@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+#  Copyright (c) Jason Whitlark. All rights reserved.
 
 # Include msg passing code.
 

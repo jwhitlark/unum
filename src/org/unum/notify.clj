@@ -1,3 +1,5 @@
+;   Copyright (c) Jason Whitlark. All rights reserved.
+
 (ns org.unum.notify
   (:use [clojure.contrib.shell-out :only (sh)])
   )

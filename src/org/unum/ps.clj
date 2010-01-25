@@ -1,3 +1,5 @@
+;   Copyright (c) Jason Whitlark. All rights reserved.
+
 (ns org.unum.ps
   (:use clojure.contrib.shell-out)
   (:use clojure.contrib.str-utils)

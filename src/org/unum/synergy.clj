@@ -1,3 +1,5 @@
+;   Copyright (c) Jason Whitlark. All rights reserved.
+
 (ns org.unum.synergy
   (:use [org.unum.notify])
   )

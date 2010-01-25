@@ -1,3 +1,5 @@
+;   Copyright (c) Jason Whitlark. All rights reserved.
+
 (ns org.unum
   (:use [clojure.contrib.swing-utils])
   (:use [clojure.contrib.command-line])
