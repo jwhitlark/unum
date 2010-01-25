@@ -116,6 +116,13 @@
 	(System/exit 0))))
 
 (defn load-rc []
+  "I used to define a namespace in the rc file, but then it gets
+tricky to reload it.  Note: see http://bc.tech.coop/blog/docs/user.clj
+for a possible different approach to reloading a
+namespace.  (Currently stuff just goes in user.)
+
+Question: since I'm usually running this via 'lein swank', is there a
+way to use 'use' and :reload-all?"
   (load-file (str user-home "/.unumrc")))
 
 ; add command line option to just run registry (zookeeper)?  Handy...

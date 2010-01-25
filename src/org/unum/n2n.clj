@@ -1,61 +1,17 @@
 (ns org.unum.n2n
   (:use [clojure.contrib.shell-out :only (sh)])
   (:use clojure.contrib.str-utils)
+  (:use clojure.test)
   )
 
-; (sh
-;(re-seq #"\n" (sh "ps" "-e" "-f"))
-; edge -r -u nobody -g nogroup -a 10.17.74.3 -c unum_network -k draka269 -l unum.whitlark.org:10177 -d n2n0 >> /var/log/n2n
-
-;{:tun "-d" :address "-a" } ); ... for each item in defedge, call against edge-flags to turn into function call.
-
-
-(defn running-edge-processes []
-  (let [procs (drop 1(re-split #"\n" (sh "ps" "-f" "-Cedge")))
-	proc-dicts (map #(let [[user proc _ _ _ _ _ _ & args] (re-split #" +" %)]
-			   {:user user :proc proc :args args}) procs)]
-    proc-dicts))
-
-
-(defn is-flag? [s]
-  (= "-" (first s)))
-
-(defn edge-kw
-  ;; #FIRST: finish testing this
-  "Returns the keywork from edge-flags corresponding to the string passed in. i.e. '-s' returns :netmask"
-  [s]
-  (first (first (filter #(= (:flag (second %)) (apply str (rest s))) edge-flags))))
-
-
-
-(loop [remaining-args (:args (first (running-edge-processes)))
-	 prev-arg nil
-	 parsed-args {}]
-  (let [curr (first remaining-args)  ; Need to check if curr exists? (end of seq)
-	curr-is-flag (is-flag? curr)
-	prev-is-flag (is-flag? prev-arg)]
-    (comment
-      (if curr-is-flag
-	(if prev-is-flag
-	  (recur (rest remaining-args) curr (assoc parsed-args (edge-kw prev-arg) curr))
-	  (recur (rest remaining-args) curr parsed-args))
-	(recur (rest remaining-args) curr parsed-args)))))
-;; #SECOND: figure out how to short circuit this when remaining-args is empty, perhaps using 	 (if (seq remaining-args)...
-	 (if (is-flag? (first remaining-args))
-	     (if (is-flag? last-arg)
-		 ; lookup last arg in edge-flags
-		 ; recur, assoc last arg keywork true
-		 ; else (should never get here)
-	     ; (recur (rest remaining-args) (first remaining-args) (assoc parsed-args ;edge-kw (first remaining-args))
-
-
+;; Data structures and core references
 
 (defstruct edge-config :tun :address :community :key :key-file :netmask :supernode
 	   :re-resolve-supernode? :local-udp-port :uid :gid :foreground? :mac :mtu :multicast-forwarding? :verbose)
 
 
 (def edge-flags (struct-map edge-config
-     {:tun                     {:flag "d" :help "tun device name"}
+     :tun                     {:flag "d" :help "tun device name"}
       :address                 {:flag "a" :help "Set interface address. For DHCP use '-r -a dhcp:0.0.0.0'"}
       :community               {:flag "c" :help "n2n community name the edge belongs to."}
       :key                     {:flag "k" :help "Encryption key (ASCII) - also N2N_KEY=<encrypt key>. Not with -K."}
@@ -67,37 +23,148 @@
       :uid                     {:flag "u" :help "User ID (numeric) to use when privileges are dropped."}
       :gid                     {:flag "g" :help "Group ID (numeric) to use when privileges are dropped."}
       :foreground?             {:flag "f" :help "Do not fork and run as a daemon; rather run in foreground."}
-      :mac                     {:flag "m" :help "Fix MAC address for the TAP interface (otherwise it may be random), eg. -m 01:02:03:04:05:06"}
+      :mac                     {:flag "m" :help "Fixed MAC address for the TAP interface (otherwise it may be random), eg. -m 01:02:03:04:05:06"}
       :mtu                     {:flag "M" :help "Specify n2n MTU of edge interface (default 1400)."}
       :multicast-forwarding?   {:flag "r" :help "Enable packet forwarding through n2n community."}
-      :verbose                 {:flag "v" :help "Make more verbose. Repeat as required."}}))
+      :verbose                 {:flag "v" :help "Make more verbose. Repeat as required."}))
 
-; example call (dhcp would be nice)
-(defedge {:tun n2n0 :address 10.17.74.1 :community jason@whitlark.org :key-file ~/.unum/key :supernode unum.whitlark.org:10774 :UID nobody :GID nogroup :enable-packet-forwarding? true})
-(start-edge n2n0)
-(stop-edge n2n0)
 
-(for (str (edge-flags arg (conf arg)))  in conf if arg not-nil
+;; Functions
 
-;(list-edges)
-;{edge status}
 
-(defmacro defedge [args]
-  `(def ~(symbol (args :tun)) ~args))
+(defn running-edge-processes []
+  (let [procs (drop 1(re-split #"\n" (sh "ps" "-f" "-Cedge")))
+	proc-dicts (map #(let [[user proc _ _ _ _ _ _ & args] (re-split #" +" %)]
+			   {:user user :proc proc :args args}) procs)]
+    proc-dicts))
 
-(defn running? [edge]
-  ())
 
-(defn start-edge [edge]
-  (when-not (running? edge)
-    (start edge)))
+(defn flag? [s]
+  (= \- (first s)))
 
-(defn stop-edge [edge]
-  (if (running? edge)
-    (kill edge)))
+(deftest test-flag?
+  (is (true? (flag? "-f")))
+  (is (false? (flag? "tun")))
+  )
 
-;(defn list-edges [] ; allow pattern matching?
-;{edge status}
 
-(defstruct and struct-map fit in here somehow...
+(defn edge-kw-from-flag
+  ;TODO: could stand to be clearer, and perhaps with better error checking.
+  "Returns the keywork from edge-flags corresponding to the string passed in. i.e. '-s' returns :netmask"
+  [string-to-test]
+  (first (first (filter #(= (:flag (second %)) (apply str (rest string-to-test))) edge-flags))))
 
+(deftest test-edge-kw-from-flag
+  (is (= (edge-kw-from-flag "-s") :netmask))
+  )
+
+
+(defn edge-flag-from-kw
+  "Returns the flag corresponding to the keyword passed in.  i.e. :netmask returns '-s'."
+  [edge-kw]
+  (str "-" (:flag (edge-kw edge-flags))))
+
+(deftest test-edge-flag-from-kw
+  (is (= (edge-flag-from-kw :netmask) "-s")))
+
+
+(defn parse-edge-process
+;TODO: OR, do we just need to grab the :tun info?
+"Parse a single edge cmd arg vec into an edge-config struct.
+;;i.e. ['-r' '-u' 'nobody' '-g' 'nogroup' '-a' '10.17.74.2' ...]
+  becomes a valid edge-config struct."
+[edge-args]
+  (if (empty? edge-args )
+    (struct edge-config)
+    (struct edge-config "n2n0") ; hardcoded for test first coding...
+    ))
+
+
+(deftest test-parse-edge-process
+  (is (= (parse-edge-process []) (struct edge-config)))
+  (is (= (parse-edge-process ["-d" "n2n0"]) (struct edge-config "n2n0")))
+)
+
+
+(defn parse-edge-processes
+  "Parse a list of edges into edge-config structs"
+  [edge-list]
+  (map parse-edge-process edge-list))
+
+
+(defn gen-edge-args
+  "Generate a sequence of command line arguments from an edge-config struct."
+  [edge-cfg]
+  (let [non-nil-keys (filter #(get edge-cfg %) (keys edge-cfg))]
+    (if (empty? non-nil-keys)
+      []
+      (reduce into (for [ky non-nil-keys]
+		     (let [k (edge-flag-from-kw ky)
+			   v (ky edge-cfg)]
+		       (if (true? v)
+			 [k]
+			 [k v])))))))
+
+(deftest test-gen-edge-args
+  (is (= (gen-edge-args (struct edge-config)) []))
+  (is (= (gen-edge-args (struct edge-config "n2n0")) ["-d" "n2n0"]))
+  (is (= (gen-edge-args (struct edge-config "n2n0" "10.17.74.1")) ["-d" "n2n0" "-a" "10.17.74.1"]))
+  (is (= (gen-edge-args (struct-map edge-config :tun "n2n0" :address "10.17.74.1" :multicast-forwarding? true)) ["-d" "n2n0" "-a" "10.17.74.1" "-r"]))
+)
+
+
+(defn start-edge-process
+  "Start and edge process using the specified kw args."
+  [args]
+  (sh (cons "edge" (gen-edge-args args))))
+
+
+;; Stream of consciousness code about how to parse edge settings out of an edge process...
+;; (loop [remaining-args (:args (first (running-edge-processes)))
+;; 	 prev-arg nil
+;; 	 parsed-args {}]
+;;   (let [curr (first remaining-args)  ; Need to check if curr exists? (end of seq)
+;; 	curr-is-flag (flag? curr)
+;; 	prev-is-flag (flag? prev-arg)]
+;;     (comment
+;;       (if curr-is-flag
+;; 	(if prev-is-flag
+;; 	  (recur (rest remaining-args) curr (assoc parsed-args (edge-kw-from-flag prev-arg) curr))
+;; 	  (recur (rest remaining-args) curr parsed-args))
+;; 	(recur (rest remaining-args) curr parsed-args)))))
+;; ;; #SECOND: figure out how to short circuit this when remaining-args is empty, perhaps using 	 (if (seq remaining-args)...
+;; 	 (if (flag? (first remaining-args))
+;; 	     (if (flag? last-arg)
+;; 		 ; lookup last arg in edge-flags
+;; 		 ; recur, assoc last arg keywork true
+;; 		 ; else (should never get here)
+;; 	     ; (recur (rest remaining-args) (first remaining-args) (assoc parsed-args ;edge-kw (first remaining-args))
+
+
+
+;; Other ideas...
+
+;; (start-edge n2n0) ; start edge by interface name...
+;; (stop-edge n2n0)
+
+
+;; ;(list-edges)
+;; ;{edge status}
+
+;; (defmacro defedge [args]
+;;   `(def ~(symbol (args :tun)) ~args))
+
+;; (defn running? [edge]
+;;   ())
+
+;; (defn start-edge [edge]
+;;   (when-not (running? edge)
+;;     (start edge)))
+
+;; (defn stop-edge [edge]
+;;   (if (running? edge)
+;;     (kill edge))) ; kill-edge has some interesting permission problems...
+
+
+;; ;(defn list-edges [] ; allow pattern matching?
+;; ;{edge status}
