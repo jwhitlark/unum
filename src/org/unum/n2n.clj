@@ -6,6 +6,12 @@
   (:use clojure.test)
   )
 
+; NEXT STEP: figure out why (let
+;                                [test-edge [:tun "n2n1" :address "10.17.75.1" :community "jason@whitlark.org" :key "berfin" :supernode "unum.whitlark.org:10774" :uid "nobody" :gid "nogroup" :multicast-forwarding? true]]
+;                                  (start-edge-process (apply struct-map edge-config test-edge)))
+; doesn't work.  Probably simple issue I'm not seeing...
+
+
 ;; Data structures and core references
 
 (defstruct edge-config :tun :address :community :key :key-file :netmask :supernode
@@ -70,21 +76,39 @@
   (is (= (edge-flag-from-kw :netmask) "-s")))
 
 
+(defn make-first-edge-kw [s]
+  "Simple helper func."
+  (edge-kw-from-flag (first s)))
+
 (defn parse-edge-process
-;TODO: OR, do we just need to grab the :tun info?
 "Parse a single edge cmd arg vec into an edge-config struct.
 ;;i.e. ['-r' '-u' 'nobody' '-g' 'nogroup' '-a' '10.17.74.2' ...]
   becomes a valid edge-config struct."
+;TODO: tidy this up - last two cases should be a single macro?
 [edge-args]
-  (if (empty? edge-args )
-    (struct edge-config)
-    (struct edge-config "n2n0") ; hardcoded for test first coding...
-    ))
+(loop [current (take 2 edge-args)
+       remaining edge-args
+       parsed []]
+  (cond
+   (empty? current)  (apply struct-map edge-config parsed)
+   (or (= 1 (count current))
+       (flag? (second current)))
+         (let [r (drop 1 remaining)]
+	   (recur (take 2 r)
+		  r
+		  (conj parsed (make-first-edge-kw current) true)))
+    :default
+     (let [r (drop 2 remaining)]
+       (recur (take 2 r)
+	      r
+	      (conj parsed (make-first-edge-kw current) (second current)))))))
+
 
 
 (deftest test-parse-edge-process
   (is (= (parse-edge-process []) (struct edge-config)))
   (is (= (parse-edge-process ["-d" "n2n0"]) (struct edge-config "n2n0")))
+  (is (= (parse-edge-process ["-a" "10.17.74.1" "-d" "n2n0"]) (struct edge-config "n2n0" "10.17.74.1")))
 )
 
 
@@ -120,27 +144,6 @@
   [args]
   (sh (cons "edge" (gen-edge-args args))))
 
-
-;; Stream of consciousness code about how to parse edge settings out of an edge process...
-;; (loop [remaining-args (:args (first (running-edge-processes)))
-;; 	 prev-arg nil
-;; 	 parsed-args {}]
-;;   (let [curr (first remaining-args)  ; Need to check if curr exists? (end of seq)
-;; 	curr-is-flag (flag? curr)
-;; 	prev-is-flag (flag? prev-arg)]
-;;     (comment
-;;       (if curr-is-flag
-;; 	(if prev-is-flag
-;; 	  (recur (rest remaining-args) curr (assoc parsed-args (edge-kw-from-flag prev-arg) curr))
-;; 	  (recur (rest remaining-args) curr parsed-args))
-;; 	(recur (rest remaining-args) curr parsed-args)))))
-;; ;; #SECOND: figure out how to short circuit this when remaining-args is empty, perhaps using 	 (if (seq remaining-args)...
-;; 	 (if (flag? (first remaining-args))
-;; 	     (if (flag? last-arg)
-;; 		 ; lookup last arg in edge-flags
-;; 		 ; recur, assoc last arg keywork true
-;; 		 ; else (should never get here)
-;; 	     ; (recur (rest remaining-args) (first remaining-args) (assoc parsed-args ;edge-kw (first remaining-args))
 
 
 

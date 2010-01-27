@@ -4,6 +4,7 @@
   (:use [clojure.contrib.swing-utils])
   (:use [clojure.contrib.command-line])
   (:use [clojure.contrib.server-socket :only (create-repl-server)])
+  (:use [clojure.test])
   ;(:use [swank.swank])
   (:require [swank.swank])
   (:use [org.unum.synergy :only (synergy-command)])
@@ -126,6 +127,11 @@ namespace.  (Currently stuff just goes in user.)
 Question: since I'm usually running this via 'lein swank', is there a
 way to use 'use' and :reload-all?"
   (load-file (str user-home "/.unumrc")))
+
+(defn reload-and-test [lib]
+  (do (require lib :reload)
+      (run-tests lib)))
+
 
 ; add command line option to just run registry (zookeeper)?  Handy...
 (defn -main
