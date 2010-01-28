@@ -31,7 +31,7 @@
 ; Need a square image to deal with transparency issues.
 (def toolkit (Toolkit/getDefaultToolkit))
 
-(def icon-image (.getImage toolkit "/home/jw/.unum/icon.png"))  ;(ClassLoader/getSystemResource "icon.png")))
+(def icon-image (.getImage toolkit (ClassLoader/getSystemResource "resources/icon.png")))
 (def scaled-icon (.getScaledInstance icon-image 24 24 1))
 (def tray-icon (TrayIcon. scaled-icon "Unum Constellation Manager" ))
 (def tray (java.awt.SystemTray/getSystemTray))
