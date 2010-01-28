@@ -77,7 +77,7 @@
 
 
 (defn make-first-edge-kw [s]
-  "Simple helper func."
+  "Simple helper func. (Named badly)"
   (edge-kw-from-flag (first s)))
 
 (defn parse-edge-process

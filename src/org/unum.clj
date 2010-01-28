@@ -128,9 +128,9 @@ Question: since I'm usually running this via 'lein swank', is there a
 way to use 'use' and :reload-all?"
   (load-file (str user-home "/.unumrc")))
 
-(defn reload-and-test [lib]
-  (do (require lib :reload)
-      (run-tests lib)))
+;; (defn reload-and-test [lib]
+;;   (do (require lib :reload)
+;;       (run-tests lib)))
 
 
 ; add command line option to just run registry (zookeeper)?  Handy...
