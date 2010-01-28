@@ -1,4 +1,5 @@
-;   Copyright (c) Jason Whitlark. All rights reserved.
+;   Copyright (c) Jason Whitlark. 2009,2010 All rights reserved.
+;   Copyright (c) Arthur Ulfeldt. 2010 All rights reserved.
 
 (ns org.unum
   (:use [clojure.contrib.swing-utils])
@@ -53,12 +54,19 @@
 (defn Identify [& args]
   (notify-send hostname "Other Constellation members will also display their names"))
 
+;; where should this go.
+(def event-time-limit 2000) 
+(defmacro with-timeout [ms & body]
+  `(let [f# (future ~@body)]
+     (.get f# ~ms java.util.concurrent.TimeUnit/MILLISECONDS)))
+
 (defn exit [& args]
-  (fire-event :kill-unum-hook)
-  ;; FIXME: there should be a better way than just sleep, but it'll
-  ;; also need a time out
-  (sleep 2)
-  (System/exit 0))
+  (try 
+   ;; the with-timeout should probably be built into
+   ;; fire-event
+   (with-timeout event-time-limit
+     (fire-event :kill-unum-hook))
+   (finally (System/exit 0))))
 
 (defn popup-listener-callback [& args]
   (println "popup called"))
