@@ -2,7 +2,9 @@
   :description "From many, one."
   :main org.unum
   :resources-path "resources"
-  :dev-dependencies [[autodoc "0.7.0"]]
+  :dev-dependencies [[autodoc "0.7.0"]
+		     [leiningen/lein-swank "1.1.0"]]
+
   :dependencies [[org.clojure/clojure "1.1.0-master-SNAPSHOT"]
                  [org.clojure/clojure-contrib "1.0-SNAPSHOT"]
 		 [clojure-http-client "1.0.0-SNAPSHOT"]
