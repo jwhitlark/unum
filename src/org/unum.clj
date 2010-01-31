@@ -6,7 +6,7 @@
   (:use [clojure.contrib.command-line])
   (:use [clojure.contrib.server-socket :only (create-repl-server)])
   (:use [clojure.test])
-  ;(:use [swank.swank])
+  (:use [couchdb.client])
   (:require [swank.swank])
   (:use [org.unum.synergy :only (synergy-command)])
   (:use [org.unum.notify :only (notify-send)])
