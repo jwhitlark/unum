@@ -1,7 +1,7 @@
 ;   Copyright (c) Jason Whitlark. All rights reserved.
 
 (ns org.unum.n2n
-  (:use [clojure.contrib.shell-out :only (sh)])
+  (:use clojure.contrib.shell-out)
   (:use clojure.contrib.str-utils)
   (:use clojure.test)
   )
@@ -142,7 +142,7 @@
 (defn start-edge-process
   "Start and edge process using the specified kw args."
   [args]
-  (sh (cons "edge" (gen-edge-args args))))
+  (apply sh (cons "edge" (gen-edge-args args))))
 
 
 
