@@ -55,13 +55,13 @@
   (notify-send hostname "Other Constellation members will also display their names"))
 
 ;; where should this go.
-(def event-time-limit 2000) 
+(def event-time-limit 2000)
 (defmacro with-timeout [ms & body]
   `(let [f# (future ~@body)]
      (.get f# ~ms java.util.concurrent.TimeUnit/MILLISECONDS)))
 
 (defn exit [& args]
-  (try 
+  (try
    ;; the with-timeout should probably be built into
    ;; fire-event
    (with-timeout event-time-limit
@@ -126,6 +126,13 @@
     (do (println "System Tray is not supported")
 	(System/exit 0))))
 
+
+(defn file-exists?
+  "Check to see if a file exists"
+  [file]
+  (.exists (java.io.File. file)))
+
+
 (defn load-rc []
   "I used to define a namespace in the rc file, but then it gets
 tricky to reload it.  Note: see http://bc.tech.coop/blog/docs/user.clj
@@ -134,7 +141,10 @@ namespace.  (Currently stuff just goes in user.)
 
 Question: since I'm usually running this via 'lein swank', is there a
 way to use 'use' and :reload-all?"
-  (load-file (str user-home "/.unumrc")))
+  (let [rc-path (str user-home "/.unumrc")]
+    (if (file-exists? rc-path)
+	 (load-file rc-path)
+	 (println (format "Can't load .unumrc file: %s not found." rc-path)))))
 
 ;; (defn reload-and-test [lib]
 ;;   (do (require lib :reload)
