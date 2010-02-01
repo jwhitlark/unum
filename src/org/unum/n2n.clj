@@ -14,12 +14,14 @@
 
 ;; Data structures and core references
 
-(defstruct edge-config :tun :address :community :key :key-file :netmask :supernode
-	   :re-resolve-supernode? :local-udp-port :uid :gid :foreground? :mac :mtu :multicast-forwarding? :verbose)
+(defstruct edge-config
+  :tun :address :community :key :key-file :netmask :supernode
+  :re-resolve-supernode? :local-udp-port :uid :gid :foreground?
+  :mac :mtu :multicast-forwarding? :verbose)
 
 
 (def edge-flags (struct-map edge-config
-     :tun                     {:flag "d" :help "tun device name"}
+      :tun                     {:flag "d" :help "tun device name"}
       :address                 {:flag "a" :help "Set interface address. For DHCP use '-r -a dhcp:0.0.0.0'"}
       :community               {:flag "c" :help "n2n community name the edge belongs to."}
       :key                     {:flag "k" :help "Encryption key (ASCII) - also N2N_KEY=<encrypt key>. Not with -K."}
@@ -93,15 +95,15 @@
    (empty? current)  (apply struct-map edge-config parsed)
    (or (= 1 (count current))
        (flag? (second current)))
-         (let [r (drop 1 remaining)]
-	   (recur (take 2 r)
-		  r
-		  (conj parsed (make-first-edge-kw current) true)))
-    :default
-     (let [r (drop 2 remaining)]
-       (recur (take 2 r)
-	      r
-	      (conj parsed (make-first-edge-kw current) (second current)))))))
+   (let [r (drop 1 remaining)]
+     (recur (take 2 r)
+	    r
+	    (conj parsed (make-first-edge-kw current) true)))
+   :default
+   (let [r (drop 2 remaining)]
+     (recur (take 2 r)
+	    r
+	    (conj parsed (make-first-edge-kw current) (second current)))))))
 
 
 
@@ -138,11 +140,48 @@
   (is (= (gen-edge-args (struct-map edge-config :tun "n2n0" :address "10.17.74.1" :multicast-forwarding? true)) ["-d" "n2n0" "-a" "10.17.74.1" "-r"]))
 )
 
+(def edge-process (agent nil))
+
+
+;this can be overwritten in ~/.edgerc
+(def edge-path (atom "edge"))
+
+(defn edge-init [config]
+  (send edge-process
+	(fn [_]
+	  (.exec (Runtime/getRuntime)
+		 (into-array (into [@edge-path "-f"]
+				   (gen-edge-args config)))))))
+
+(defn byte-seq [rdr]
+  "create a lazy seq of bytes in a file and close the file at the end"
+  (let [result (. rdr read)]
+    (if (= result -1)
+      (do (. rdr close) nil)
+      (lazy-seq (cons result (byte-seq rdr))))))
+
+(defn edge-debug []
+  "returns the output from starting edge"
+  {:std-out (apply str (map char (byte-seq (.getInputStream @edge-process))))
+   :std-err (apply str (map char (byte-seq (.getErrorStream @edge-process))))})
+
+(defn edge-kill []
+  (send edge-process #(when-not (nil? %) (. % destroy) nil)))
+
+(defn edge-alive? []
+  (if (nil? @edge-process)
+    false
+    (try
+     (. @edge-process exitValue)
+     false
+     (catch java.lang.IllegalThreadStateException e
+       true))))
 
 (defn start-edge-process
   "Start and edge process using the specified kw args."
   [args]
-  (apply sh (cons "edge" (gen-edge-args args))))
+  (edge-init args))
+;  (apply sh (cons "/home/arthur/n2n/n2n_v2/edge" (gen-edge-args args))))
 
 
 
