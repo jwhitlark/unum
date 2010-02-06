@@ -162,11 +162,51 @@
 
 (defn edge-debug []
   "returns the output from starting edge"
-  {:std-out (apply str (map char (byte-seq (.getInputStream @edge-process))))
-   :std-err (apply str (map char (byte-seq (.getErrorStream @edge-process))))})
+  (when (not (nil? @edge-process))
+    {:std-out (apply str (map char (byte-seq (.getInputStream @edge-process))))
+     :std-err (apply str (map char (byte-seq (.getErrorStream @edge-process))))}))
 
 (defn edge-kill []
-  (send edge-process #(when-not (nil? %) (. % destroy) nil)))
+  "kill the edge process and nil it away so the watchdog
+wont restart it."
+  (send edge-process #(when-not (nil? %) (. % destroy) 
+				nil)))
+
+
+(def watchdog-reset-time (ref 500000))
+
+;what should we do for error logging?
+(def the-log (ref ""))
+
+(defn log [message]
+  (dosync (commute the-log str @the-log message)))
+
+(defn now []
+  (System/currentTimeMillis))
+
+(defn edge-watchdog [config limit count timestamp]
+  (edge-init config)
+  (await edge-process)
+  (log "edge started")
+  (.waitFor @edge-process)
+  (log (str "edge exited with: " (.exitValue @edge-process)))
+  (log (edge-debug))
+  (if (> (- (now)  timestamp) @watchdog-reset-time)
+    (recur config limit 1 (now))
+    (if (< count limit)
+      (recur config limit (inc count) (now))
+      (log "edge died too many times"))))
+
+; run forever - rolling log
+; make edge independent, live seperatly 
+
+; detect accute failures 
+;        when it stops working
+
+(defn edge-supervisor [config limit]
+  "start edge in the background and restart it unless it restart more then <limit>
+times in 5 min."
+    (. (Thread.  #(edge-watchdog config limit 0 (now))) start))
 
 (defn edge-alive? []
   (if (nil? @edge-process)
@@ -180,8 +220,10 @@
 (defn start-edge-process
   "Start and edge process using the specified kw args."
   [args]
-  (edge-init args))
-;  (apply sh (cons "/home/arthur/n2n/n2n_v2/edge" (gen-edge-args args))))
+  ;TODO detect existing edge processes and watchdog them instead of
+  ;     of starting a new one.
+  (edge-supervisor args 3))
+
 
 
 
