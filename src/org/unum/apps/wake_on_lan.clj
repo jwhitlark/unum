@@ -1,11 +1,9 @@
 ;   Copyright (c) Jason Whitlark. 2010 All rights reserved.
 
 (ns org.unum.apps.wake-on-lan
-  (:use clojure.contrib.shell-out)
   (:use clojure.contrib.str-utils)
   (:use clojure.contrib.seq-utils)
   (:use clojure.test)
-;  (:import '[java.io. ])
   (:import (java.net InetAddress DatagramPacket DatagramSocket))
   )
 
@@ -44,11 +42,6 @@
     (doto (DatagramSocket.)
       (.send packet)
       (.close))))
-
-
-;; (defn wake-on-lan [host]
-;;   "Send a message to all hosts to try to wake this machine"
-;;   )
 
 
 ;; Tests
