@@ -6,15 +6,14 @@
   (:use [clojure.contrib.command-line])
   (:use [clojure.contrib.server-socket :only (create-repl-server)])
   (:use [clojure.test])
-  (:use [couchdb.client])
   (:require [swank.swank])
   (:use [org.unum.synergy :only (synergy-command)])
   (:use [org.unum.notify :only (notify-send)])
   (:use [org.unum.hooks])
+  (:use [org.unum.net])
   (:import [java.io File])
   (:import [javax.swing UIManager])
   (:import [javax.imageio ImageIO])
-  (:import (java.net InetAddress))
   (:import [java.awt TrayIcon Toolkit PopupMenu MenuItem Menu CheckboxMenuItem])
   (:gen-class))
 
@@ -22,7 +21,6 @@
 ;; Use the operating system native UI look and feel, do not use the Swing oriented look
 (UIManager/setLookAndFeel "com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
 
-(def hostname (.getHostName (InetAddress/getLocalHost)))
 
 ; Tell swank not to be picky, this should go somewhere else...
 ;(ignore-protocol-version "2009-03-09")
