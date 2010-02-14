@@ -2,15 +2,21 @@
 
 (ns org.unum.datastore
   (:use couchdb.client)
+  (:use clojure.contrib.json.write)
   (:use clojure.test)
 
   (:use org.unum.net)
+
+  (:require [clojure.http.resourcefully :as resourcefully])
 )
 
 ;TODO:
 ;  have a way to check that couchdb is installed and running
 ;  start replication on any connected hosts, (how to determine connection?)
 ;  couchdb.client does not let you easily manipulate views, add functionality, perhaps even views in clojure, since couchdb permits other languages...
+;  Fix replication to handle missing databases, (currently fails, despite what the docs say)
+;  Fix replication to replicate continously, (currently fails, despite what the docs say)
+;  Need to create a proxy, or bind couchdb to all network addresses (yuck).
 
 ;; Constants
 (def couch-loc "http://localhost:5984/")
@@ -63,3 +69,20 @@
 (defn lookup-unum-member [host-name]
   "Return the record of a given host-name from unum-members."
   (get-record #(= (:hostname %) host-name) "unum-members"))
+
+
+(defn start-bidirectional-replication [first-host second-host db create continous]
+  "Starts bi-directional replication between two couchdb instances."
+  (let [first-url (str "http://" first-host "/_replicate" )
+	first-json-payload (json-str {:source (str "http://" first-host "/" db)
+				      :target (str "http://" second-host "/" db)
+				      :create_target create
+				      :continous continous})
+	second-url (str "http://" second-host "/_replicate" )
+	second-json-payload (json-str {:source (str "http://" second-host "/" db)
+				       :target (str "http://" first-host "/" db)
+				       :create_target create
+				       :continous continous})]
+    (do (resourcefully/post first-url {} first-json-payload)
+	(resourcefully/post second-url {} second-json-payload))))
+

@@ -2,6 +2,7 @@
 
 (ns org.unum.net
   (:use clojure.contrib.str-utils)
+  (:use clojure.test)
 
   (:import (java.net InetAddress NetworkInterface))
 )
@@ -23,7 +24,7 @@
 
 (defn mac-string-to-byte [mac-string]
   "Convert a string representation of a mac address into an array of bytes."
-  (map #(byte (Integer/parseInt % 16)) (re-split #"[\:-]" mac)))
+  (map #(byte (Integer/parseInt % 16)) (re-split #"[\:-]" mac-string)))
 
 
 (defn mac-byte-to-string [mac-bytes]
