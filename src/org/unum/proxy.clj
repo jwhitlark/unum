@@ -29,6 +29,16 @@
       (print in-data))
     (recur (.accept server-socket))))
 
+;; Test session, (so far)
+;; (use 'clojure.contrib.duck-streams)
+;; (def ss (create-proxy-server-socket proxy-from))
+;; (def soc (.accept ss))
+;; (def in-s (.getInputStream soc))
+;; (def in-l (read-lines in-s))
+
+
+;("GET / HTTP/1.1" "Host: 10.17.74.2:10178" "User-Agent: Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.1.7) Gecko/20100106 Ubuntu/9.10 (karmic) Firefox/3.5.7" "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" "Accept-Language: en-us,en;q=0.5" "Accept-Encoding: gzip,deflate" "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7" "Keep-Alive: 300" "Connection: keep-alive" "")
+
 
 ;; package proxyServer;
 
