@@ -1,0 +1,13 @@
+(use 'org.unum.n2n)
+
+(swap! org.unum.n2n/edge-path (fn [_] "/home/arthur/n2n/n2n_v2/edge"))
+
+(def config 
+     (struct-map edge-config 
+       :address "10.2.3.2" 
+       :tap "tap12" 
+       :community "artnet"
+       :key "aak314aak"
+       :supernode "arthur.ulfeldt.com:3456"))
+
+(start-edge-process config)

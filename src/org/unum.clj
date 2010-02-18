@@ -11,6 +11,7 @@
   (:use [org.unum.synergy :only (synergy-command)])
   (:use [org.unum.notify :only (notify-send)])
   (:use [org.unum.hooks])
+  (:use [org.unum.net])
   (:import [java.io File])
   (:import [javax.swing UIManager])
   (:import [javax.imageio ImageIO])
@@ -126,6 +127,13 @@
     (do (println "System Tray is not supported")
 	(System/exit 0))))
 
+
+(defn file-exists?
+  "Check to see if a file exists"
+  [file]
+  (.exists (java.io.File. file)))
+
+
 (defn load-rc []
   "I used to define a namespace in the rc file, but then it gets
 tricky to reload it.  Note: see http://bc.tech.coop/blog/docs/user.clj
@@ -134,9 +142,10 @@ namespace.  (Currently stuff just goes in user.)
 
 Question: since I'm usually running this via 'lein swank', is there a
 way to use 'use' and :reload-all?"
-  (try
-   (load-file (str user-home "/.unumrc"))
-   (catch Exception e (println e))))
+  (let [rc-path (str user-home "/.unumrc")]
+    (if (file-exists? rc-path)
+	 (load-file rc-path)
+	 (println (format "Can't load .unumrc file: %s not found." rc-path)))))
 
 ;; (defn reload-and-test [lib]
 ;;   (do (require lib :reload)

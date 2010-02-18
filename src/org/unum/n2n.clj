@@ -1,7 +1,7 @@
 ;   Copyright (c) Jason Whitlark. All rights reserved.
 
 (ns org.unum.n2n
-  (:use [clojure.contrib.shell-out :only (sh)])
+  (:use clojure.contrib.shell-out)
   (:use clojure.contrib.str-utils)
   (:use clojure.test)
   )
@@ -14,9 +14,9 @@
 
 ;; Data structures and core references
 
-(defstruct edge-config 
-  :tun :address :community :key :key-file :netmask :supernode 
-  :re-resolve-supernode? :local-udp-port :uid :gid :foreground? 
+(defstruct edge-config
+  :tun :address :community :key :key-file :netmask :supernode
+  :re-resolve-supernode? :local-udp-port :uid :gid :foreground?
   :mac :mtu :multicast-forwarding? :verbose)
 
 
@@ -132,7 +132,7 @@
 		       (if (true? v)
 			 [k]
 			 [k v])))))))
-   
+
 (deftest test-gen-edge-args
   (is (= (gen-edge-args (struct edge-config)) []))
   (is (= (gen-edge-args (struct edge-config "n2n0")) ["-d" "n2n0"]))
@@ -147,9 +147,9 @@
 (def edge-path (atom "edge"))
 
 (defn edge-init [config]
-  (send edge-process 
-	(fn [_] 
-	  (.exec (Runtime/getRuntime) 
+  (send edge-process
+	(fn [_]
+	  (.exec (Runtime/getRuntime)
 		 (into-array (into [@edge-path "-f"]
 				   (gen-edge-args config)))))))
 
@@ -211,7 +211,7 @@ times in 5 min."
 (defn edge-alive? []
   (if (nil? @edge-process)
     false
-    (try 
+    (try
      (. @edge-process exitValue)
      false
      (catch java.lang.IllegalThreadStateException e
