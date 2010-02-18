@@ -134,7 +134,9 @@ namespace.  (Currently stuff just goes in user.)
 
 Question: since I'm usually running this via 'lein swank', is there a
 way to use 'use' and :reload-all?"
-  (load-file (str user-home "/.unumrc")))
+  (try
+   (load-file (str user-home "/.unumrc"))
+   (catch Exception e (println e))))
 
 ;; (defn reload-and-test [lib]
 ;;   (do (require lib :reload)
