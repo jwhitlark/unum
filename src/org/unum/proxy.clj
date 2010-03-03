@@ -4,9 +4,15 @@
 ;  (:use clojure.contrib.str-utils)
   (:use clojure.contrib.duck-streams)
   (:use clojure.contrib.seq-utils)
+  (:use clojure.contrib.server-socket)
   (:use clojure.test)
 
-  (:import (java.net ServerSocket InetAddress InetSocketAddress))
+  (:import (java.net ServerSocket InetAddress InetSocketAddress)
+	   (java.io IOException)
+	   (java.net Socket)
+	   (java.net InetSocketAddress)
+	   (java.net SocketTimeoutException)
+	   (java.net UnknownHostException))
 
   (:use org.unum.net)
   (:use org.unum.datastore)
@@ -15,6 +21,49 @@
 (def proxied-couchdb-port 10178)
 
 (def proxy-from (InetSocketAddress. (my-unum-ip-address) proxied-couchdb-port))
+
+(def proxy-timeout 5000)
+(def proxy-hostname "localhost")
+
+(defn connect-to-local [port]
+  (let [sock-addr (InetSocketAddress. proxy-hostname port)
+	sock (Socket.)]
+    (try
+     (. sock connect sock-addr proxy-timeout)
+     (println "conected to " sock-addr)
+     (catch IOException e false)
+     (catch SocketTimeoutException e false)
+     (catch UnknownHostException e false))
+    (let [out (. sock getOutputStream)
+	  in  (. sock getInputStream)]
+      [in out])))
+
+(defn forward [from to]
+  (try 
+   (let [data (. from read)]
+     (if (not= data -1)
+       (do (. to write data)
+	   (recur from to))))
+   (catch IOException ioException (println ioException))))
+  
+  
+(defn forward-to-localhost [remote-in remote-out] 
+  (println "forwarding new connection")
+  (let [[local-in local-out] (connect-to-local 8080)
+	remote-to-local (. (Thread. #(forward remote-in local-out)) start)
+	local-to-remote (. (Thread. #(forward local-in remote-out)) start)]
+    (. remote-to-local await)
+    (println "remote-to-local finished")
+    (. local-to-remote await)
+    (println "local-to-remote finished")
+    (println "connection closed")))
+
+;how do I kill the threads started by this?
+;its getting really frusterating to test this while
+;having to restart the repl every time I start the server.
+; ... grrrr ....
+(defn proxy-server []
+  (create-server 9090 forward-to-localhost))
 
 (defn create-proxy-server-socket [from-addr]
   (let [sock (ServerSocket.)]
