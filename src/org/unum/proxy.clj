@@ -25,7 +25,10 @@
 (def proxy-timeout 5000)
 (def proxy-hostname "localhost")
 
+(def proxyed-local-sockets (ref #{}))
+
 (defn connect-to-local [port]
+  "opens a socket to the given port on local host and adds the sock to the list of local connections"
   (let [sock-addr (InetSocketAddress. proxy-hostname port)
 	sock (Socket.)]
     (try
@@ -36,6 +39,8 @@
      (catch UnknownHostException e false))
     (let [out (. sock getOutputStream)
 	  in  (. sock getInputStream)]
+      (dosync 
+       (commute proxyed-local-sockets conj sock))
       [in out])))
 
 (defn forward [from to]
@@ -45,25 +50,55 @@
        (do (. to write data)
 	   (recur from to))))
    (catch IOException ioException (println ioException))))
-  
+
+(def couchdb-port 8080)  
   
 (defn forward-to-localhost [remote-in remote-out] 
-  (println "forwarding new connection")
-  (let [[local-in local-out] (connect-to-local 8080)
-	remote-to-local (. (Thread. #(forward remote-in local-out)) start)
-	local-to-remote (. (Thread. #(forward local-in remote-out)) start)]
-    (. remote-to-local await)
+  (println "forwarding new connection from " remote-in)
+  (let [[local-in local-out] (connect-to-local couchdb-port)
+	remote-to-local (Thread. #(forward remote-in local-out))
+	local-to-remote (Thread. #(forward local-in remote-out))]
+    (println "starting remote-to-local")
+    (. remote-to-local start)
+    (println "starting local-to-remote")
+    (. local-to-remote start)
+    (println "waiting for threads to finish")
+    (. remote-to-local join)
     (println "remote-to-local finished")
-    (. local-to-remote await)
+    (. local-to-remote join)
     (println "local-to-remote finished")
     (println "connection closed")))
 
-;how do I kill the threads started by this?
-;its getting really frusterating to test this while
-;having to restart the repl every time I start the server.
-; ... grrrr ....
-(defn proxy-server []
-  (create-server 9090 forward-to-localhost))
+(def proxy-server-sock (ref :not-running))
+
+(defn get-proxyed-connections []
+  "get all the local and remote sockets used by the proxy"
+  (concat 
+   @(:connections @proxy-server-sock)
+   @proxyed-local-sockets))
+
+(defn kill-proxy-server []
+  "proxy server runs in its own thread and must be killed before it will reliese the port"
+   ; this is a concurrency bug. should be in dosync and use agetnt to close sockets
+  (map #(. % close) (get-proxyed-connections))
+  (. (:server-socket @proxy-server-sock) close)
+  (dosync 
+   (ref-set proxy-server-sock :not-running)
+   (ref-set proxyed-local-sockets #{})))
+
+
+(defn proxy-server [listen-port]
+  "either start a new socket server, or restart if it is already running"
+  (dosync 
+   (if (not= @proxy-server-sock :not-running)
+     (kill-proxy-server))
+   (ref-set proxy-server-sock (create-server listen-port forward-to-localhost))))
+
+
+
+
+
+
 
 (defn create-proxy-server-socket [from-addr]
   (let [sock (ServerSocket.)]
