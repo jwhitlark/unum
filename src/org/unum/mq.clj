@@ -58,7 +58,11 @@ to do better in the future."
   (let [brk (BrokerService.)]
     (.setBrokerName brk "fred")
     (.setUseShutdownHook brk false)
-    (.addNetworkConnector brk "static://(tcp://192.168.1.8:61615)") ;;"multicast://default") ;"static://"+"tcp://somehost:61616");
+    (let [bridge-conn (.addNetworkConnector brk "static://(tcp://192.168.1.8:61615)")] ;;"multicast://default") ;"static://"+"tcp://somehost:61616");
+      (.setName bridge-conn "bridge")
+      (.setDuplex bridge-conn true)
+      (.setConduitSubscriptions bridge-conn true)
+    (.setDecreaseNetworkConsumerPriority bridge-conn false))
     (.addConnector brk "tcp://192.168.1.7:61616") ;openwire (activeMQ native fmt)
     (.addConnector brk "stomp://localhost:61617")
     (.addConnector brk "xmpp://localhost:61618")
