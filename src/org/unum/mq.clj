@@ -51,6 +51,7 @@
   (doto (BrokerService.)
     (.setBrokerName "fred")
     (.setUseShutdownHook false)
+    (.addNetworkConnector "multicast://default")
     (.addConnector "tcp://localhost:61616") ;openwire (activeMQ native fmt)
     (.addConnector "stomp://localhost:61617")
     (.addConnector "xmpp://localhost:61618")
