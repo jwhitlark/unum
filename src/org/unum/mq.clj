@@ -55,14 +55,15 @@ to do better in the future."
   (org.apache.log4j.BasicConfigurator/configure))
 
 (defn create-simple-broker []
-  (doto (BrokerService.)
-    (.setBrokerName "fred")
-    (.setUseShutdownHook false)
-    (.addNetworkConnector "static://(tcp://192.168.1.8:61615,tcp://192.168.1.7:61615)") ;;"multicast://default") ;"static://"+"tcp://somehost:61616");
-    (.addConnector "tcp://192.168.1.7:61616") ;openwire (activeMQ native fmt)
-    (.addConnector "stomp://localhost:61617")
-    (.addConnector "xmpp://localhost:61618")
-    (.start)))
+  (let [brk (BrokerService.)]
+    (.setBrokerName brk "fred")
+    (.setUseShutdownHook brk false)
+    (.addNetworkConnector brk "static://(tcp://192.168.1.8:61615)") ;;"multicast://default") ;"static://"+"tcp://somehost:61616");
+    (.addConnector brk "tcp://192.168.1.7:61616") ;openwire (activeMQ native fmt)
+    (.addConnector brk "stomp://localhost:61617")
+    (.addConnector brk "xmpp://localhost:61618")
+    (.start brk)
+    brk))
 
 
 (defn create-connection [user password url]
