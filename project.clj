@@ -17,3 +17,10 @@
 ;; Stuff we don't need to include UNLESS we remove one of the above.
 ;;		 [log4j "1.2.14"] - part of activemq
 ;;               [jmdns "1.0"] ; - part of activemq
+
+;; Sample code using jetty, (is this the right one? or should it be org.eclipse.something...
+;;	 [org.mortbay.jetty/jetty "6.1.21"]
+;; (:import org.mortbay.jetty.Server
+;;            [org.mortbay.jetty.servlet Context ServletHolder]
+;;            org.mortbay.jetty.bio.SocketConnector
+;;            org.mortbay.jetty.security.SslSocketConnector))
