@@ -63,6 +63,7 @@ to do better in the future."
       (.setDuplex bridge-conn true)
       (.setConduitSubscriptions bridge-conn true)
     (.setDecreaseNetworkConsumerPriority bridge-conn false))
+    (.addConnector brk "tcp://192.168.1.7:61615") ;openwire (activeMQ native fmt)
     (.addConnector brk "tcp://192.168.1.7:61616") ;openwire (activeMQ native fmt)
     (.addConnector brk "stomp://localhost:61617")
     (.addConnector brk "xmpp://localhost:61618")
