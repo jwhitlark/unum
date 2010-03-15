@@ -47,6 +47,7 @@
 ; service:jmx:rmi:///jndi/rmi://localhost:1099/jmxrmi with JConsole to
 ; view/manipulate.  Very Useful & functional!
 
+;; ========== Broker API ==========
 
 (defn configure-log-to-console []
   "Will pipe logs to console, (where swank was started, if you're
@@ -54,33 +55,52 @@ using it.  Stops log4j from complaining about activemq; we will need
 to do better in the future."
   (org.apache.log4j.BasicConfigurator/configure))
 
-(defn create-simple-broker []
-  (let [brk (BrokerService.)]
-    (.setBrokerName brk "fred")
-    (.setUseShutdownHook brk false)
-    (let [bridge-conn (.addNetworkConnector brk "static://(tcp://192.168.1.8:61615)")] ;;"multicast://default") ;"static://"+"tcp://somehost:61616");
-      (.setName bridge-conn "bridge")
-      (.setDuplex bridge-conn true)
-      (.setConduitSubscriptions bridge-conn true)
-    (.setDecreaseNetworkConsumerPriority bridge-conn false))
-    (.addConnector brk "tcp://192.168.1.7:61615") ;openwire (activeMQ native fmt)
-    (.addConnector brk "tcp://192.168.1.7:61616") ;openwire (activeMQ native fmt)
-    (.addConnector brk "stomp://localhost:61617")
-    (.addConnector brk "xmpp://localhost:61618")
-    (.start brk)
-    brk))
+
+(defn- add-connections-to-broker [brk connections]
+    (dorun (map #(.addConnector brk %) connections)))
+
+;;"multicast://default") ;"static://"+"tcp://somehost:61616");
+
+(defn- add-bridge-connection-to-broker
+  ([brk connection] (add-bridge-connection-to-broker brk "bridge" true true false connection))
+  ([brk name duplex conduit-subscriptions decrease-priority connection]
+     (doto (.addNetworkConnector brk connection)
+      (.setName name)
+      (.setDuplex duplex)
+      (.setConduitSubscriptions conduit-subscriptions)
+      (.setDecreaseNetworkConsumerPriority decrease-priority))))
+
+(defn create-standard-broker [bname use-shutdown-hook net-connector connectors]
+  (doto (BrokerService.)
+    (.setBrokerName bname)
+    (.setUseShutdownHook use-shutdown-hook)
+    (add-bridge-connection-to-broker net-connector)
+    (add-connections-to-broker connectors)
+    (.start)))
+
+;example call
+;; (create-standard-broker "fred" false "static://(tcp://192.168.1.8:61615)"
+;; 			["tcp://192.168.1.7:61615"
+;; 			 "tcp://localhost:61616"
+;; 			 "stomp://localhost:61617"
+;; 			 "xmpp://localhost:61618"])
 
 
-(defn create-connection [user password url]
-  (let [connectionFactory (ActiveMQConnectionFactory. user password url)
-	connection (.createConnection connectionFactory)]
-    connection))
+;; ========== Client API ==========
 
-(defn create-session [connection]
-  (.start connection)
-  (let [transacted false ; Not sure what this does...
-	session (.createSession connection transacted AUTO_ACKNOWLEDGE)]
-    session))
+(defn create-connection
+  ([url] (create-connection "system" "manager" url))
+  ([user password url]  (let [connectionFactory (ActiveMQConnectionFactory. user password url)
+			       connection (.createConnection connectionFactory)]
+			   connection)))
+
+(defn create-session
+  ([connection] (create-session false AUTO_ACKNOWLEDGE connection))
+  ([transacted ack-policy connection]
+     (do (.start connection)
+	 (let [session (.createSession connection transacted ack-policy)]
+	   session))))
+
 
 (defn create-consumer [session queue-name]
   (let [destination (.createQueue session queue-name)
