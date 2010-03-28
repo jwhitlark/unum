@@ -184,7 +184,16 @@ wont restart it."
 (defn now []
   (System/currentTimeMillis))
 
+(defn edge-polling-watchdog [config previous-configs limit count timestamp]
+  (let [edges (rbuunning-edge-processes)]
+    ;kill edges with old config
+    
+    ;find current edges
+    ;poll the edge
+))
+
 (defn edge-watchdog [config limit count timestamp]
+  (println (running-edge-processes))
   (edge-init config)
   (await edge-process)
   (log "edge started")
