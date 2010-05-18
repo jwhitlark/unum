@@ -23,11 +23,6 @@
 ;; Use the operating system native UI look and feel, do not use the Swing oriented look
 (UIManager/setLookAndFeel "com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
 
-(def hostname (.getHostName (InetAddress/getLocalHost)))
-
-; Tell swank not to be picky, this should go somewhere else...
-;(ignore-protocol-version "2009-03-09")
-
 (def user-home (java.lang.System/getProperty "user.home"))
 ; Need a square image to deal with transparency issues.
 (def toolkit (Toolkit/getDefaultToolkit))
@@ -56,13 +51,13 @@
   (notify-send hostname "Other Constellation members will also display their names"))
 
 ;; where should this go.
-(def event-time-limit 2000) 
+(def event-time-limit 2000)
 (defmacro with-timeout [ms & body]
   `(let [f# (future ~@body)]
      (.get f# ~ms java.util.concurrent.TimeUnit/MILLISECONDS)))
 
 (defn exit [& args]
-  (try 
+  (try
    ;; the with-timeout should probably be built into
    ;; fire-event
    (with-timeout event-time-limit

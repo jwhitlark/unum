@@ -10,8 +10,8 @@
 		 [clojure-http-client "1.0.0-SNAPSHOT"]
 		 [org.apache.activemq/activemq-core "5.3.0"]
 		 [org.apache.activemq/activemq-xmpp "5.3.0"]
-		 [org.clojars.the-kenny/clojure-couchdb "0.1.3"]
-		 [org.clojure/swank-clojure "1.0"]
+		 [org.clojars.the-kenny/clojure-couchdb "0.2.1"]
+		 [swank-clojure "1.1.0"]
 		 ])
 
 ;; Stuff we don't need to include UNLESS we remove one of the above.

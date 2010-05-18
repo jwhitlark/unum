@@ -169,7 +169,7 @@
 (defn edge-kill []
   "kill the edge process and nil it away so the watchdog
 wont restart it."
-  (send edge-process #(when-not (nil? %) (. % destroy) 
+  (send edge-process #(when-not (nil? %) (. % destroy)
 				nil)))
 
 
@@ -185,9 +185,9 @@ wont restart it."
   (System/currentTimeMillis))
 
 (defn edge-polling-watchdog [config previous-configs limit count timestamp]
-  (let [edges (rbuunning-edge-processes)]
+  (let [edges (running-edge-processes)]
     ;kill edges with old config
-    
+
     ;find current edges
     ;poll the edge
 ))
@@ -207,9 +207,9 @@ wont restart it."
       (log "edge died too many times"))))
 
 ; run forever - rolling log
-; make edge independent, live seperatly 
+; make edge independent, live seperatly
 
-; detect accute failures 
+; detect accute failures
 ;        when it stops working
 
 (defn edge-supervisor [config limit]
