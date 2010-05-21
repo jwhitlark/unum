@@ -2,6 +2,7 @@
 
 (ns org.unum.proxy
 ;  (:use clojure.contrib.str-utils)
+  (:use clojure.contrib.logging)
   (:use clojure.contrib.duck-streams)
   (:use clojure.contrib.seq-utils)
   (:use clojure.contrib.server-socket)
@@ -33,47 +34,47 @@
 	sock (Socket.)]
     (try
      (. sock connect sock-addr proxy-timeout)
-     (println "conected to " sock-addr)
+     (info "conected to " sock-addr)
      (catch IOException e false)
      (catch SocketTimeoutException e false)
      (catch UnknownHostException e false))
     (let [out (. sock getOutputStream)
 	  in  (. sock getInputStream)]
-      (dosync 
+      (dosync
        (commute proxyed-local-sockets conj sock))
       [in out])))
 
 (defn forward [from to]
-  (try 
+  (try
    (let [data (. from read)]
      (if (not= data -1)
        (do (. to write data)
 	   (recur from to))))
-   (catch IOException ioException (println ioException))))
+   (catch IOException ioException (error ioException))))
 
-(def couchdb-port 8080)  
-  
-(defn forward-to-localhost [remote-in remote-out] 
-  (println "forwarding new connection from " remote-in)
+(def couchdb-port 8080)
+
+(defn forward-to-localhost [remote-in remote-out]
+  (info "forwarding new connection from " remote-in)
   (let [[local-in local-out] (connect-to-local couchdb-port)
 	remote-to-local (Thread. #(forward remote-in local-out))
 	local-to-remote (Thread. #(forward local-in remote-out))]
-    (println "starting remote-to-local")
+    (info "starting remote-to-local")
     (. remote-to-local start)
-    (println "starting local-to-remote")
+    (info "starting local-to-remote")
     (. local-to-remote start)
-    (println "waiting for threads to finish")
+    (info "waiting for threads to finish")
     (. remote-to-local join)
-    (println "remote-to-local finished")
+    (info "remote-to-local finished")
     (. local-to-remote join)
-    (println "local-to-remote finished")
-    (println "connection closed")))
+    (info "local-to-remote finished")
+    (info "connection closed")))
 
 (def proxy-server-sock (ref :not-running))
 
 (defn get-proxyed-connections []
   "get all the local and remote sockets used by the proxy"
-  (concat 
+  (concat
    @(:connections @proxy-server-sock)
    @proxyed-local-sockets))
 
@@ -82,14 +83,14 @@
    ; this is a concurrency bug. should be in dosync and use agetnt to close sockets
   (map #(. % close) (get-proxyed-connections))
   (. (:server-socket @proxy-server-sock) close)
-  (dosync 
+  (dosync
    (ref-set proxy-server-sock :not-running)
    (ref-set proxyed-local-sockets #{})))
 
 
 (defn proxy-server [listen-port]
   "either start a new socket server, or restart if it is already running"
-  (dosync 
+  (dosync
    (if (not= @proxy-server-sock :not-running)
      (kill-proxy-server))
    (ref-set proxy-server-sock (create-server listen-port forward-to-localhost))))

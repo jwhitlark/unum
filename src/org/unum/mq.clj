@@ -5,6 +5,7 @@
 
 (ns org.unum.mq
   (:use org.unum.net)
+  (:use [clojure.contrib.logging])
   (:use clojure.contrib.import-static)
 
   (:import (org.apache.activemq.broker BrokerService)

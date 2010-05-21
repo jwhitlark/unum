@@ -1,6 +1,7 @@
 ;   Copyright (c) Jason Whitlark. All rights reserved.
 
 (ns org.unum.n2n
+  (:use clojure.contrib.logging)
   (:use clojure.contrib.shell-out)
   (:use clojure.contrib.str-utils)
   (:use clojure.test)
@@ -175,11 +176,11 @@ wont restart it."
 
 (def watchdog-reset-time (ref 500000))
 
-;what should we do for error logging?
-(def the-log (ref ""))
+;; ;what should we do for error logging?
+;; (def the-log (ref ""))
 
-(defn log [message]
-  (dosync (commute the-log str @the-log message)))
+;; (defn log [message]
+;;   (dosync (commute the-log str @the-log message)))
 
 (defn now []
   (System/currentTimeMillis))
@@ -193,18 +194,18 @@ wont restart it."
 ))
 
 (defn edge-watchdog [config limit count timestamp]
-  (println (running-edge-processes))
+  (info (running-edge-processes))
   (edge-init config)
   (await edge-process)
-  (log "edge started")
+  (info "edge started")
   (.waitFor @edge-process)
-  (log (str "edge exited with: " (.exitValue @edge-process)))
-  (log (edge-debug))
+  (warn (str "edge exited with: " (.exitValue @edge-process)))
+  (debug (edge-debug))
   (if (> (- (now)  timestamp) @watchdog-reset-time)
     (recur config limit 1 (now))
     (if (< count limit)
       (recur config limit (inc count) (now))
-      (log "edge died too many times"))))
+      (warn "edge died too many times"))))
 
 ; run forever - rolling log
 ; make edge independent, live seperatly

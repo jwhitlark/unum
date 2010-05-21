@@ -1,6 +1,7 @@
 ;   Copyright (c) Jason Whitlark. All rights reserved.
 
 (ns org.unum.hooks
+  (:use [clojure.contrib.logging])
   )
 
 ;; see http://www.gnu.org/software/emacs/manual/html_node/emacs/Hooks.html
@@ -28,7 +29,7 @@
 
 (defn run-hook [hook]
   (do
-    (println "running" hook)
+    (info "running" hook)
     (dorun (map pcalls (@event-dispatch hook)))))
 
 (defn list-valid-hooks []
@@ -39,13 +40,13 @@
 (defn fire-event [event]
   ;; Add exception handling for illegal events
   (dosync
-   (println "event " event "fired")
+   (info (str "event " event "fired"))
    (alter event-queue conj event)))
 
 (defn add-hook [hook fn]
   ;;; Add exception handling for illegal events
   (dosync
-   (println "hook " hook " has had function " fn " added.")
+   (info (str "hook " hook " has had function " fn " added."))
    (alter event-dispatch assoc hook (conj (get @event-dispatch hook []) fn))))
 
 ;; (defn remove-hook [hook fn]
@@ -63,7 +64,7 @@
      (let [event (first @event-queue)]
        (if event
 	 (do
-	   (println "event " event "found in queue")
+	   (info (str "event " event "found in queue"))
 	   (run-hook event)
 	   (ref-set event-queue (rest @event-queue)))))))
   (recur))
