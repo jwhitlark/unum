@@ -16,7 +16,7 @@
 	   (java.net UnknownHostException))
 
   (:use org.unum.net)
-  (:use org.unum.datastore)
+;  (:use org.unum.datastore)
 )
 
 (def proxied-couchdb-port 10178)

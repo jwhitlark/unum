@@ -5,7 +5,6 @@
   (:import (java.net InetAddress))
   )
 
-
 (def user-home (java.lang.System/getProperty "user.home"))
 (def event-time-limit 2000)
 
@@ -39,8 +38,11 @@ for a possible different approach to reloading a
 namespace.  (Currently stuff just goes in user.)"
   (let [rc-path (str user-home "/.unum/unumrc")]
     (if (file-exists? rc-path)
-	 (load-file rc-path)
+	 (do
+	   (load-file rc-path)
+ 	   (info (str rc-path " executed in namespace " *ns*)))
 	 (warn (format "Can't load unumrc file: %s not found." rc-path)))))
+
 
 ;; (defn reload-and-test [lib]
 ;;   (do (require lib :reload)

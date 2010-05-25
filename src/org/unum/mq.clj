@@ -15,6 +15,169 @@
 
 (import-static javax.jms.Session AUTO_ACKNOWLEDGE)
 
+;; ========== State ==========
+
+(def standard-bridge-port "61615")
+(def local-broker (ref nil))
+(def local-connection (ref nil))
+(def local-session (ref nil))
+
+;; ========== Broker API ==========
+
+(defn add-connections-to-broker [brk connections]
+  (if-not (nil? connections)
+    (dorun (map #(.addConnector brk %) connections))))
+
+;;"multicast://default") ;"static://"+"tcp://somehost:61616");
+
+(defn add-bridge-connection-to-broker
+  ([brk connection] (add-bridge-connection-to-broker brk "bridge" true true false connection))
+  ([brk name duplex conduit-subscriptions decrease-priority connection]
+     (if-not (nil? connection)
+       (doto (.addNetworkConnector brk connection)
+	 (.setName name)
+	 (.setDuplex duplex)
+	 (.setConduitSubscriptions conduit-subscriptions)
+	 (.setDecreaseNetworkConsumerPriority decrease-priority)))))
+
+(defn create-standard-broker [bname use-shutdown-hook net-connector connectors]
+  (doto (BrokerService.)
+    (.setBrokerName bname)
+    (.setUseShutdownHook use-shutdown-hook)
+    (add-bridge-connection-to-broker net-connector)
+    (add-connections-to-broker connectors)
+    (.start)))
+
+;example call
+;; (create-standard-broker "fred" false "static://(tcp://192.168.1.8:61615)"
+;; 			["tcp://192.168.1.7:61615"
+;; 			 "tcp://localhost:61616"
+;; 			 "stomp://localhost:61617"
+;; 			 "xmpp://localhost:61618"])
+
+(defn init-local-broker []
+  "Create a broker that listens on the unum address for external
+connections, and allows openwire and stomp connections from localhost.
+Network connections to other unum instances are added separately
+later."
+  (dosync (ref-set local-broker (create-standard-broker "Unum" false nil
+							[(str "tcp://" (my-unum-ip-address) ":61615") ;TODO: ensure unum address exists!
+							 "tcp://localhost:61616"
+							 "stomp://localhost:61617"]))))
+
+(defn close-local-broker []
+  "Shut down activeMQ."
+  (do
+    (.stop @local-broker)
+    (dosync
+     (ref-set local-broker nil))))
+
+;; ========== Client API ==========
+
+(defn create-connection
+  ([url] (create-connection "system" "manager" url))
+  ([user password url]  (let [connectionFactory (ActiveMQConnectionFactory. user password url)
+			       connection (.createConnection connectionFactory)]
+			   connection)))
+
+(defn init-local-connection []
+  (dosync (ref-set local-connection (create-connection "tcp://localhost:61616"))))
+
+
+(defn create-session
+  ([connection] (create-session false AUTO_ACKNOWLEDGE connection))
+  ([transacted ack-policy connection]
+     (do (.start connection)
+	 (let [session (.createSession connection transacted ack-policy)]
+	   session))))
+
+(defn init-local-session []
+  (dosync (ref-set local-session (create-session @local-connection))))
+
+
+(defn create-consumer [session queue-name]
+  (let [destination (.createQueue session queue-name)
+	consumer (.createConsumer session destination)]
+    consumer))
+
+(defn create-producer [session queue-name]
+  (let [destination (.createQueue session queue-name)
+	producer (.createProducer session destination)]
+    producer))
+
+(defn send-msg
+  ([queue-name message-text]
+     (let [producer (create-producer @local-session queue-name)
+	   message (.createTextMessage @local-session message-text)]
+       (.send producer message)))
+
+  ([user password url queue-name message-text]
+     (with-open [connection (create-connection user password url)
+		 session (create-session connection)
+		 producer (create-producer session queue-name)]
+       (let [message (.createTextMessage session message-text)]
+	 (.send producer message)))))
+
+
+(defn read-msg
+  ([queue-name]
+     (read-msg queue-name 1000))
+
+  ([queue-name timeout-in-ms]
+     (let [consumer (create-consumer @local-session queue-name)]
+       (.getText (.receive consumer timeout-in-ms)))) ;FIXME: needs to be able to handle other types of messages.
+
+  ([user password url queue-name timeout-in-ms]
+     (with-open [connection (create-connection user password url)
+		 session (create-session connection)
+		 consumer (create-consumer session queue-name)]
+       (.getText (.receive consumer timeout-in-ms))))) ; .getText Only works on TextMessage
+
+(defn create-msg-handler
+"fn should be a function that expects a Message object of some type.  A simple example would be #(println (.getText %)) with will print the text of a text message, and crash on anything else ;-)"
+  ([queue-name fn]
+     (let [listener (proxy [MessageListener] []
+		       (onMessage [msg]
+				  (fn msg)))
+	   consumer (create-consumer @local-session queue-name)]
+       (.setMessageListener consumer listener)))
+
+  ([user password url queue-name fn]
+     (let [lstn (proxy [MessageListener] []
+		  (onMessage [msg]
+			     (fn msg)))
+	   conn (create-connection user password url)
+	   sess (create-session conn)
+	   consum (create-consumer sess queue-name)]
+       (.setMessageListener consum lstn))))
+
+
+(defn initialize-local-message-queue []
+  (do
+    (init-local-broker)
+    (init-local-connection)
+    (init-local-session)))
+
+(defn create-test-message-queue-and-handler []
+  (create-msg-handler (str "unum." hostname ".testing") #(debug %1)))
+
+(defn create-mq-admin-queue-and-handler []
+  (create-msg-handler (str "unum." hostname ".mq.request-connection")
+		      #(let [target-ip (.getText %1)
+			     target-connection-string (str "static://(tcp://" target-ip ":" standard-bridge-port ")")]
+			 (if-not (= target-ip my-unum-ip-address)
+			   (add-bridge-connection-to-broker @local-broker target-connection-string)))))
+
+(defn unum-announce-callback [msg]
+  (let [target-connection-string (str "static://(tcp://" (:source-addr msg) ":" standard-bridge-port ")")
+	target-hostname (.substring (:message msg) (count announce-msg))]
+    (if-not (= target-hostname hostname)
+      (do (add-bridge-connection-to-broker @local-broker target-connection-string)
+	  (send-msg (str "unum." target-hostname ".mq.request-connection") (my-unum-ip-address))))))
+
+(defn listen-and-add-transport-on-receipt-of-unum-announce-udp []
+  (listen-for-unum-announce-udp unum-announce-callback))
+
 ;; ----- Connecting via STOMP & telnet
 ; $telnet localhost 61617
 ; CONNECT
@@ -47,95 +210,6 @@
 ;Starts JMX by default, connect to
 ; service:jmx:rmi:///jndi/rmi://localhost:1099/jmxrmi with JConsole to
 ; view/manipulate.  Very Useful & functional!
-
-;; ========== Broker API ==========
-
-(defn configure-log-to-console []
-  "Will pipe logs to console, (where swank was started, if you're
-using it.  Stops log4j from complaining about activemq; we will need
-to do better in the future."
-  (org.apache.log4j.BasicConfigurator/configure))
-
-
-(defn- add-connections-to-broker [brk connections]
-    (dorun (map #(.addConnector brk %) connections)))
-
-;;"multicast://default") ;"static://"+"tcp://somehost:61616");
-
-(defn- add-bridge-connection-to-broker
-  ([brk connection] (add-bridge-connection-to-broker brk "bridge" true true false connection))
-  ([brk name duplex conduit-subscriptions decrease-priority connection]
-     (doto (.addNetworkConnector brk connection)
-      (.setName name)
-      (.setDuplex duplex)
-      (.setConduitSubscriptions conduit-subscriptions)
-      (.setDecreaseNetworkConsumerPriority decrease-priority))))
-
-(defn create-standard-broker [bname use-shutdown-hook net-connector connectors]
-  (doto (BrokerService.)
-    (.setBrokerName bname)
-    (.setUseShutdownHook use-shutdown-hook)
-    (add-bridge-connection-to-broker net-connector)
-    (add-connections-to-broker connectors)
-    (.start)))
-
-;example call
-;; (create-standard-broker "fred" false "static://(tcp://192.168.1.8:61615)"
-;; 			["tcp://192.168.1.7:61615"
-;; 			 "tcp://localhost:61616"
-;; 			 "stomp://localhost:61617"
-;; 			 "xmpp://localhost:61618"])
-
-
-;; ========== Client API ==========
-
-(defn create-connection
-  ([url] (create-connection "system" "manager" url))
-  ([user password url]  (let [connectionFactory (ActiveMQConnectionFactory. user password url)
-			       connection (.createConnection connectionFactory)]
-			   connection)))
-
-(defn create-session
-  ([connection] (create-session false AUTO_ACKNOWLEDGE connection))
-  ([transacted ack-policy connection]
-     (do (.start connection)
-	 (let [session (.createSession connection transacted ack-policy)]
-	   session))))
-
-
-(defn create-consumer [session queue-name]
-  (let [destination (.createQueue session queue-name)
-	consumer (.createConsumer session destination)]
-    consumer))
-
-(defn create-producer [session queue-name]
-  (let [destination (.createQueue session queue-name)
-	producer (.createProducer session destination)]
-    producer))
-
-(defn send-msg [user password url queue-name message-text]
-  (with-open [connection (create-connection user password url)
-	      session (create-session connection)
-	      producer (create-producer session queue-name)]
-    (let [message (.createTextMessage session message-text)]
-      (.send producer message))))
-
-(defn read-msg [user password url queue-name]
-  (let [timeout 1000] ; In milli-seconds.
-    (with-open [connection (create-connection user password url)
-		session (create-session connection)
-		consumer (create-consumer session queue-name)]
-      (.getText (.receive consumer timeout))))) ; .getText Only works on TextMessage
-
-(defn create-msg-handler [user password url queue-name fn]
-"fn should be a function that expects a Message object of some type.  A simple example would be #(println (.getText %)) with will print the text of a text message, and crash on anything else ;-)"
-  (let [lstn (proxy [MessageListener] []
-		       (onMessage [msg]
-				  (fn msg)))
-	conn (create-connection user password url)
-	sess (create-session conn)
-	consum (create-consumer sess queue-name)]
-    (.setMessageListener consum lstn)))
 
 
 ; ----- Embedded web console -----

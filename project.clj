@@ -2,16 +2,16 @@
   :description "From many, one."
   :main org.unum
   :resources-path "resources"
-  :dev-dependencies [[autodoc "0.7.0"]
-		     [leiningen/lein-swank "1.1.0"]]
+;  :dev-dependencies [[autodoc "0.7.0"]
+;		     [leiningen/lein-swank "1.1.0"]]
 
-  :dependencies [[org.clojure/clojure "1.1.0-master-SNAPSHOT"]
-                 [org.clojure/clojure-contrib "1.0-SNAPSHOT"]
+  :dependencies [[org.clojure/clojure "1.1.0"]
+                 [org.clojure/clojure-contrib "1.1.0"]
 		 [clojure-http-client "1.0.0-SNAPSHOT"]
 		 [org.apache.activemq/activemq-core "5.3.0"]
-		 [org.apache.activemq/activemq-xmpp "5.3.0"]
+;		 [org.apache.activemq/activemq-xmpp "5.3.0"]
 		 [org.clojars.the-kenny/clojure-couchdb "0.2.1"]
-		 [swank-clojure "1.1.0"]
+		 [swank-clojure "1.2.1"]
 		 ])
 
 ;; Stuff we don't need to include UNLESS we remove one of the above.

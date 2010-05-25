@@ -1,15 +1,30 @@
 ;   Copyright (c) Jason Whitlark. 2010 All rights reserved.
 
 (ns org.unum.net
+  (:use clojure.contrib.logging)
   (:use clojure.contrib.str-utils)
   (:use clojure.test)
 
-  (:import (java.net InetAddress NetworkInterface))
+  (:import (java.net InetAddress NetworkInterface DatagramSocket DatagramPacket))
 )
 
 ;; Constants
 (def hostname (.getHostName (InetAddress/getLocalHost)))
+(def announce-msg "Unum announce:")
+(def default-udp-announce-port 51423)
 
+;; State
+(def announce-listener-socket (ref nil))
+
+;; Alter state
+(defn init-announce-listener-socket []
+  (dosync (ref-set announce-listener-socket (DatagramSocket. default-udp-announce-port))))
+
+(defn close-announce-listener-socket []
+  (.close @announce-listener-socket)
+  (dosync (ref-set announce-listener-socket nil)))
+
+;; Functions
 
 (defn mac-string-to-byte [mac-string]
   "Convert a string representation of a mac address into an array of bytes."
@@ -24,7 +39,6 @@
     (apply str (interpose ":" v))))
 
 
-;; Funcs
 (defn my-interfaces []
   "Returns a seq containing all the NetworkInterface(s) of this machine."
   (enumeration-seq (NetworkInterface/getNetworkInterfaces)))
@@ -53,11 +67,51 @@
   (let [unum-interface (get-unum-interface)]
     (if (nil? unum-interface)
       nil
-      (first (filter #(instance? java.net.Inet4Address %) (enumeration-seq (.getInetAddresses (get-unum-interface))))))))
+      (let [addresses (filter #(instance? java.net.Inet4Address %) (enumeration-seq (.getInetAddresses (get-unum-interface))))
+	    first-as-string (.getHostAddress (first addresses))]
+	first-as-string
+))))
+;; TODO: HARDCODED: Arthur, can you whip this up?
+(defn my-unum-broadcast-address []
+  "Determine the broadcast address of the primary n2n interface, n2n0"
+  "10.17.74.255")
+
+(defn broadcast-unum-annonunce-udp [address port]
+  "Takes address as a string, and port as an integer."
+  (let [target_address (InetAddress/getByName address)
+      msg (.getBytes (str announce-msg hostname))
+      sock (DatagramSocket.)
+      packet (DatagramPacket. msg (count msg) target_address port)]
+  (doto sock
+	(.send packet)
+	(.close))))
+
+(defn receive-single-udp-packet [socket]
+  (let [buffer (byte-array 4096)
+	packet (DatagramPacket. buffer (count buffer))]
+    (do
+      (.receive socket packet)
+      (let [msg (String. buffer 0 (.getLength packet))
+	    source-addr (.getAddress packet)]
+	(debug (str "Received unum announce (" msg ") from " source-addr))
+	{:message msg :source-ip source-addr}
+	    ))))
+
+
+(defn listen-for-unum-announce-udp [callback]
+  "Start a thread that listenes for unum announce packets on a specific interface, and calls the callback when they are received."
+  (.start (Thread. #((loop []
+      (info "Starting listener for unum udp announce packets")
+      (callback (receive-single-udp-packet @announce-listener-socket))
+      (recur))))))
 
 
 
 
 ;; Tests
-(deftest test-mac-byte-to-string
-  (is (= (mac-byte-to-string "01:AD:43") '(1 -83 67))))
+;; FIXME: char cannot be cast to number?
+;; (deftest test-mac-byte-to-string
+;;   (is (= (mac-byte-to-string "01:AD:43") '(1 -83 67))))
+
+(deftest one-failing-test-to-make-sure-it-can
+  (is (= true false)))
