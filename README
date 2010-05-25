@@ -1,0 +1,14 @@
+* Installation for use/testing (ubuntu)
+** Install n2n_edge from http://unum.whitlark.org/~jw or compile it yourself after cloning http://github.com/jwhitlark/N2N
+Then you'll need to configure it and run it with sudo.  Something like
+#+begin_example
+sudo edge -E -r -u nobody -g nogroup -a <<unum ip address>> -c <<your-unum-network-name>> -k <<your-passcode>> -l unum.whitlark.org:10177 -d n2n0
+#+end_example
+You can choose the values for above.  Probably pick something in the 10.*.*.* range, and whatever you want for your constellation name and passcode.
+** install couchdb and start, if not already running
+sudo apt-get install couchdb couchdb-bin python-couchdb python-desktopcouch desktopcouch-tools quickly-ubuntu-template
+http://wiki.apache.org/couchdb/Installing_on_Ubuntu
+** Install other dependencies
+sudo apt-get install libnotify-bin
+* Hacking
+TODO
