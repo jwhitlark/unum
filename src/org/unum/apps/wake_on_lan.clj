@@ -2,6 +2,7 @@
 
 (ns org.unum.apps.wake-on-lan
   (:use clojure.contrib.str-utils)
+  (:use clojure.contrib.seq-utils)
   (:use clojure.test)
 
   (:import (java.net InetAddress DatagramPacket DatagramSocket))
