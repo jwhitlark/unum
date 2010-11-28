@@ -8,7 +8,7 @@ Very alpha.  ATM, it does not fully configure the message bus, nor do more than 
 
 # Installation for use/testing (Ubuntu)
 
-## Install n2n_edge from http://unum.whitlark.org/~jw or compile it yourself after cloning http://github.com/jwhitlark/N2N  Note that my version is currently out of date; you might be better just using the original from www.ntop.org (requires svn).  There is version 1 in the Ubuntu repositories, but that's not recommended.
+Install n2n_edge from http://unum.whitlark.org/~jw or compile it yourself after cloning http://github.com/jwhitlark/N2N  Note that my version is currently out of date; you might be better just using the original from www.ntop.org (requires svn).  There is version 1 in the Ubuntu repositories, but that's not recommended.
 Then you'll need to configure it and run it with sudo.  Something like
 
 >
