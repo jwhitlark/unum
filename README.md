@@ -2,6 +2,15 @@
 
 Unum is conceived of as a platform/management layer for ALL your computers, physical or virtual.  It depends on N2N, a peer-to-peer VPN, (although it could be easily changed to work with any VPN) .  On top of your vpn network, it configures a message bus (Apache ActiveMQ) and a data store (Apache CouchDB) to allow plugins/apps to work across any/all of your machines.
 
+# License
+
+> The use and distribution terms for this software are covered by the
+> Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
+> which can be found in the file epl-v10.html at the root of this distribution.
+> By using this software in any fashion, you are agreeing to be bound by
+> the terms of this license.
+> You must not remove this notice, or any other, from this software.
+
 # Current state
 
 Very alpha.  ATM, it does not fully configure the message bus, nor do more than the minimum with the data store.
