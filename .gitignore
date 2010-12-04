@@ -1,2 +1,6 @@
+activemq-data/*
+classes/*
+lib/*
+*.jar
 *.pyc
 *~
