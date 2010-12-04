@@ -5,12 +5,13 @@
 ;  :dev-dependencies [[autodoc "0.7.0"]
 ;		     [leiningen/lein-swank "1.1.0"]]
 
-  :dependencies [[org.clojure/clojure "1.1.0"]
-                 [org.clojure/clojure-contrib "1.1.0"]
-		 [clojure-http-client "1.0.0-SNAPSHOT"]
-		 [org.apache.activemq/activemq-core "5.3.0"]
-;		 [org.apache.activemq/activemq-xmpp "5.3.0"]
-		 [org.clojars.the-kenny/clojure-couchdb "0.2.1"]
+  :dependencies [[org.clojure/clojure "1.2.0"]
+                 [org.clojure/clojure-contrib "1.2.0"]
+		 ; [clojure-http-client "1.1.0-SNAPSHOT"]
+		 [org.apache.activemq/activemq-core "5.4.0"]
+		 [org.apache.activemq/activemq-camel "5.4.0"]
+		 [org.apache.camel/camel-core "2.4.0"]
+		 [clojure-couchdb "0.4.5"]
 		 [swank-clojure "1.2.1"]
 		 ])
 
