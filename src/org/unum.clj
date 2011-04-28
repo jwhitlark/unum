@@ -19,7 +19,7 @@
   (:use [org.unum.n2n])
   (:use [org.unum.net])
   (:use [org.unum.mq])
-  (:use [org.unum.camel])
+;  (:use [org.unum.camel])
   (:use [org.unum.gui])
   (:gen-class))
 
@@ -42,7 +42,7 @@
 	 (warn "No n2n edge processes found.")
 	 (info "Existing n2n edge process available."))
        ;; init message bus
-       (simple-camel)
+       ;; (simple-camel)
        ;; (initialize-local-message-queue)
        ;; (init-announce-listener-socket)
        ;; (create-test-message-queue-and-handler)
