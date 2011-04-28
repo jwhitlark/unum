@@ -144,7 +144,7 @@ later."
 (defn create-msg-handler
 "fn should be a function that expects a Message object of some type.  A simple example would be #(println (.getText %)) with will print the text of a text message, and crash on anything else ;-)"
   ([queue-name fn]
-     (let [listener (proxy [MessageListener] []
+     (let [listener (proxy [javax.jms.MessageListener] []
 		       (onMessage [msg]
 				  (fn msg)))
 	   consumer (create-consumer @local-session queue-name)]

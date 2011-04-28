@@ -19,6 +19,7 @@
   (:use [org.unum.n2n])
   (:use [org.unum.net])
   (:use [org.unum.mq])
+  (:use [org.unum.camel])
   (:use [org.unum.gui])
   (:gen-class))
 
@@ -40,16 +41,18 @@
        (if (empty? (running-edge-processes))
 	 (warn "No n2n edge processes found.")
 	 (info "Existing n2n edge process available."))
-       ; init message bus
-       (initialize-local-message-queue)
-       (init-announce-listener-socket)
-       (create-test-message-queue-and-handler)
-       (create-mq-admin-queue-and-handler)
-       (listen-and-add-transport-on-receipt-of-unum-announce-udp)
-       (broadcast-unum-annonunce-udp (my-unum-broadcast-address) default-udp-announce-port)
+       ;; init message bus
+       (simple-camel)
+       ;; (initialize-local-message-queue)
+       ;; (init-announce-listener-socket)
+       ;; (create-test-message-queue-and-handler)
+       ;; (create-mq-admin-queue-and-handler)
+       ;; (listen-and-add-transport-on-receipt-of-unum-announce-udp)
+       ;; (broadcast-unum-annonunce-udp (my-unum-broadcast-address) default-udp-announce-port)
        ; init datastore
        (when-not headless
-	 (create-gui))
+	 (create-gui)
+	 (prn "started"))
        )))
 
 ; Tricky, need this for running outside of jar?

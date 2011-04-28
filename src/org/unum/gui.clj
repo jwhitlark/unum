@@ -28,9 +28,9 @@
 (defn system-tray-available? []
   (java.awt.SystemTray/isSupported))
 
-(defn- declare-gui-objects []
+(defn declare-gui-objects []
   (do (def toolkit (Toolkit/getDefaultToolkit))
-      (def icon-image (.getImage toolkit (ClassLoader/getSystemResource "resources/icon.png")))
+      (def icon-image (.createImage toolkit (ClassLoader/getSystemResource "icon.png")))
       (def scaled-icon (.getScaledInstance icon-image 24 24 1))
       (def tray-icon (TrayIcon. scaled-icon "Unum Constellation Manager" ))
       (def tray (java.awt.SystemTray/getSystemTray))
@@ -50,30 +50,29 @@
 	appMenu (Menu. "Apps")
 	configMenu (Menu. "Configuration")
 	]
-
     (doto popup
       (.add appMenu)
       (.add configMenu)
       (.addSeparator)
       (.add exitItem))
 
+
     ;; ========== App specific ==========
 
     (doto appMenu
       (.add (Identify/get-menu))
-      (.add (Socketrepl/get-menu))
-      (.add (Swank/get-menu))
-      (.add (Debug-mq/get-menu)))
-;      (.add (Synergy/get-menu))
+       (.add (Socketrepl/get-menu))
+       (.add (Swank/get-menu))
+       (.add (Debug-mq/get-menu)))
 
-    (Identify/setup-listener)
+       ;;(.add (Synergy/get-menu)))
+
+      ;(Identify/setup-listener)
 ;    (Synergy/setup-listener)
-
     ;; ----- action listeners -----
 
     (add-action-listener exitItem exit)
     (add-action-listener popup popup-listener-callback)
-
     (.setPopupMenu tray-icon popup)))
 
 

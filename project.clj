@@ -1,27 +1,15 @@
 (defproject unum "0.1.0"  ;;SEE: http://semver.org/ for versioning strategy
   :description "From many, one."
   :main org.unum
-  :resources-path "resources"
-;  :dev-dependencies [[autodoc "0.7.0"]
-;		     [leiningen/lein-swank "1.1.0"]]
-
+  :url "https://github.com/jwhitlark/unum"
+  :license {:name "Eclipse Public License"}
   :dependencies [[org.clojure/clojure "1.2.0"]
                  [org.clojure/clojure-contrib "1.2.0"]
-		 ; [clojure-http-client "1.1.0-SNAPSHOT"]
 		 [org.apache.activemq/activemq-core "5.4.0"]
 		 [org.apache.activemq/activemq-camel "5.4.0"]
+		 ;;		 [activemq/activemq-transport-xstream "2.1"]
+		 [com.thoughtworks.xstream/xstream "1.3.1"]
 		 [org.apache.camel/camel-core "2.4.0"]
 		 [clojure-couchdb "0.4.5"]
 		 [swank-clojure "1.2.1"]
 		 ])
-
-;; Stuff we don't need to include UNLESS we remove one of the above.
-;;		 [log4j "1.2.14"] - part of activemq
-;;               [jmdns "1.0"] ; - part of activemq
-
-;; Sample code using jetty, (is this the right one? or should it be org.eclipse.something...
-;;	 [org.mortbay.jetty/jetty "6.1.21"]
-;; (:import org.mortbay.jetty.Server
-;;            [org.mortbay.jetty.servlet Context ServletHolder]
-;;            org.mortbay.jetty.bio.SocketConnector
-;;            org.mortbay.jetty.security.SslSocketConnector))
