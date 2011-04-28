@@ -12,11 +12,13 @@
   (:use [clojure.contrib.logging])
   )
 
-;; see http://www.gnu.org/software/emacs/manual/html_node/emacs/Hooks.html
+;; Note that these are NOT the same kind of hooks as provided by
+;; robert.hooke.  If we're using emacs jargon, the functions defined
+;; here are hooks, and the functions defined in robert.hooke are
+;; closer to advice.  I suppose I'll just have rename this stuff to
+;; events or something like that :'-(
 
-;; Should standard functionality be implemented via hooks? It would be
-;; easy, but might let people break the system.  Perhaps two levels of
-;; hooks? system-hook and hook? implemented via meta-data?
+;; see http://www.gnu.org/software/emacs/manual/html_node/emacs/Hooks.html
 
 ;; events are just keywords, like :host-joined
 
